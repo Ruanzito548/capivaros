@@ -19,7 +19,9 @@ export async function GET(request: Request) {
 
   try {
     const usersSnapshot = await getDocs(collection(db, "users"));
-    const ranking: any[] = [];
+
+    // 🔥 Junta todas as promises pra rodar em paralelo (MUITO mais rápido)
+    const promises: Promise<any>[] = [];
 
     for (const userDoc of usersSnapshot.docs) {
       const user = userDoc.data();
@@ -27,34 +29,40 @@ export async function GET(request: Request) {
       if (!Array.isArray(user.characters)) continue;
 
       for (const char of user.characters) {
-        try {
-          const res = await fetch(
-            `http://localhost:3000/api/logs?name=${char.name}&server=${char.server}&region=US&zone=${zone}`
-          );
+        const url = `https://capivaros.vercel.app/api/logs?name=${char.name}&server=${char.server}&region=US&zone=${zone}`;
 
-          if (!res.ok) continue;
+        const promise = fetch(url)
+          .then(async (res) => {
+            if (!res.ok) return null;
 
-          const data = await res.json();
+            const data = await res.json();
+            const percent = data?.percent;
 
-          // 🔥 AGORA compatível com a última versão da logs
-          const percent = data?.percent;
+            if (typeof percent === "number" && percent > 0) {
+              return {
+                username: user.username,
+                character: data.name,
+                percent,
+              };
+            }
 
-          if (typeof percent === "number" && percent > 0) {
-            ranking.push({
-              username: user.username,
-              character: data.name,
-              percent,
-            });
-          }
-        } catch {
-          continue;
-        }
+            return null;
+          })
+          .catch(() => null);
+
+        promises.push(promise);
       }
     }
 
-    ranking.sort((a, b) => b.percent - a.percent);
+    // 🔥 Executa tudo junto
+    const results = await Promise.all(promises);
 
-    return NextResponse.json(ranking.slice(0, limit));
+    const ranking = results
+      .filter((r) => r !== null)
+      .sort((a, b) => b.percent - a.percent)
+      .slice(0, limit);
+
+    return NextResponse.json(ranking);
   } catch (error) {
     return NextResponse.json(
       { error: "Ranking generation failed", details: error },
