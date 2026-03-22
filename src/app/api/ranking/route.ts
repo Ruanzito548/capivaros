@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { adminDb } from "@/lib/firebase-admin";
+
+export const runtime = "nodejs";
 
 export async function GET(request: Request) {
 
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
 
     console.log("🔍 Buscando usuários...");
 
-    const usersSnapshot = await getDocs(collection(db, "users"));
+    const usersSnapshot = await adminDb.collection("users").get();
 
     if (!usersSnapshot || usersSnapshot.empty) {
       console.warn("⚠️ Nenhum usuário encontrado");
