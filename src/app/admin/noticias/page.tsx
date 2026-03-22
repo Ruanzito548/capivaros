@@ -28,14 +28,46 @@ export default function NoticiasAdmin() {
 
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // 🔥 NOVO: controle de edição
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const router = useRouter();
 
   // -----------------------
-  // Verificar permissão
+  // 🔥 FUNÇÕES YOUTUBE
+  // -----------------------
+
+  function getYoutubeId(url: string) {
+    try {
+      const parsed = new URL(url);
+
+      if (parsed.hostname.includes("youtube.com")) {
+        return parsed.searchParams.get("v");
+      }
+
+      if (parsed.hostname === "youtu.be") {
+        return parsed.pathname.slice(1);
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  function getYoutubeEmbed(url: string) {
+    const id = getYoutubeId(url);
+    if (!id) return url;
+    return `https://www.youtube.com/embed/${id}`;
+  }
+
+  function getYoutubeThumbnail(url: string) {
+    const id = getYoutubeId(url);
+    if (!id) return null;
+    return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+  }
+
+  // -----------------------
+  // Permissão
   // -----------------------
 
   useEffect(() => {
@@ -155,11 +187,6 @@ export default function NoticiasAdmin() {
 
       if (!editingId) return;
 
-      if (!title.trim() || !content.trim()) {
-        alert("Preencha título e conteúdo.");
-        return;
-      }
-
       await setDoc(doc(db, "news", editingId), {
         title,
         content,
@@ -183,30 +210,17 @@ export default function NoticiasAdmin() {
   };
 
   // -----------------------
-  // Excluir notícia
+  // Excluir
   // -----------------------
 
   const deleteNews = async (id: string) => {
 
-    try {
+    if (!confirm("Excluir essa notícia?")) return;
 
-      if (!confirm("Excluir essa notícia?")) return;
-
-      await deleteDoc(doc(db, "news", id));
-      await fetchNews();
-
-    } catch (error) {
-
-      console.error("Erro ao excluir notícia:", error);
-      alert("Erro ao excluir.");
-
-    }
+    await deleteDoc(doc(db, "news", id));
+    await fetchNews();
 
   };
-
-  // -----------------------
-  // Reset form
-  // -----------------------
 
   const resetForm = () => {
     setEditingId(null);
@@ -216,16 +230,8 @@ export default function NoticiasAdmin() {
     setVideo("");
   };
 
-  // -----------------------
-  // Loading
-  // -----------------------
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white">
-        Carregando painel...
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center bg-black text-white">Carregando...</div>;
   }
 
   return (
@@ -275,10 +281,8 @@ export default function NoticiasAdmin() {
 
           <button
             onClick={editingId ? updateNews : createNews}
-            className={`p-3 rounded transition ${
-              editingId
-                ? "bg-yellow-600 hover:bg-yellow-700"
-                : "bg-red-700 hover:bg-red-800"
+            className={`p-3 rounded ${
+              editingId ? "bg-yellow-600" : "bg-red-700"
             }`}
           >
             {editingId ? "Salvar Edição" : "Publicar Notícia"}
@@ -288,75 +292,88 @@ export default function NoticiasAdmin() {
 
         {/* LISTA */}
 
-        <h2 className="text-2xl mb-6 text-red-400">
-          Notícias Publicadas
-        </h2>
-
         <div className="space-y-6">
 
-          {news.map((n) => (
+          {news.map((n) => {
 
-            <div
-              key={n.id}
-              className="bg-[#111] border border-red-800 p-6 rounded-xl"
-            >
+            const thumb = getYoutubeThumbnail(n.video);
 
-              <h3 className="text-xl font-bold mb-2">
-                {n.title}
-              </h3>
+            return (
 
-              <p className="text-gray-400 mb-4">
-                {n.content.slice(0, 150)}...
-              </p>
+              <div key={n.id} className="bg-[#111] border border-red-800 p-6 rounded-xl">
 
-              {n.image && (
-                <img
-                  src={n.image}
-                  className="rounded mb-4 max-h-60 object-cover"
-                />
-              )}
+                <h3 className="text-xl font-bold mb-2">{n.title}</h3>
 
-              {n.video && (
-                <div className="mb-4">
-                  <iframe
-                    src={n.video.replace("watch?v=", "embed/")}
-                    className="w-full h-64 rounded"
-                    allowFullScreen
-                  />
+                <p className="text-gray-400 mb-4">
+                  {n.content.slice(0, 150)}...
+                </p>
+
+                {n.image && (
+                  <img src={n.image} className="rounded mb-4 max-h-60 object-cover" />
+                )}
+
+                {/* 🔥 PLAYER INTELIGENTE */}
+
+                {n.video && thumb && (
+                  <div className="mb-4">
+
+                    {/* Thumbnail */}
+                    <div
+                      className="relative cursor-pointer"
+                      onClick={() => window.open(n.video, "_blank")}
+                    >
+                      <img src={thumb} className="rounded w-full" />
+
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-red-600 p-4 rounded-full">
+                          ▶
+                        </div>
+                      </div>
+                    </div>
+
+                    <a
+                      href={n.video}
+                      target="_blank"
+                      className="block mt-2 text-red-400 underline"
+                    >
+                      Assistir no YouTube
+                    </a>
+
+                  </div>
+                )}
+
+                {/* BOTÕES */}
+
+                <div className="flex gap-2">
+
+                  <button
+                    onClick={() => {
+                      setEditingId(n.id);
+                      setTitle(n.title);
+                      setContent(n.content);
+                      setImage(n.image || "");
+                      setVideo(n.video || "");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="bg-yellow-600 px-4 py-2 rounded"
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    onClick={() => deleteNews(n.id)}
+                    className="bg-red-700 px-4 py-2 rounded"
+                  >
+                    Excluir
+                  </button>
+
                 </div>
-              )}
-
-              {/* BOTÕES */}
-
-              <div className="flex gap-2">
-
-                <button
-                  onClick={() => {
-                    setEditingId(n.id);
-                    setTitle(n.title);
-                    setContent(n.content);
-                    setImage(n.image || "");
-                    setVideo(n.video || "");
-
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="bg-yellow-600 px-4 py-2 rounded hover:bg-yellow-700 transition"
-                >
-                  Editar
-                </button>
-
-                <button
-                  onClick={() => deleteNews(n.id)}
-                  className="bg-red-700 px-4 py-2 rounded hover:bg-red-800 transition"
-                >
-                  Excluir
-                </button>
 
               </div>
 
-            </div>
+            );
 
-          ))}
+          })}
 
         </div>
 

@@ -37,30 +37,53 @@ export default function NewsList() {
   const destaque = news[0];
   const outras = news.slice(1);
 
-  const getVideoThumbnail = (url: string) => {
-    const id = url.split("v=")[1];
+  // 🔥 YOUTUBE HELPERS
+
+  function getYoutubeId(url: string) {
+    try {
+      const parsed = new URL(url);
+
+      if (parsed.hostname.includes("youtube.com")) {
+        return parsed.searchParams.get("v");
+      }
+
+      if (parsed.hostname === "youtu.be") {
+        return parsed.pathname.slice(1);
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  function getVideoThumbnail(url: string) {
+    const id = getYoutubeId(url);
+    if (!id) return null;
     return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
-  };
+  }
 
   return (
 
     <div className="min-h-screen bg-[#0b0b0b] text-white px-6 py-16 flex flex-col items-center">
 
-      <h1 className="text-5xl font-bold text-red-500 mb-16 drop-shadow-[0_0_20px_rgba(255,0,0,0.8)]">
+      <h1 className="text-5xl font-bold text-red-500 mb-16">
         Notícias da Guilda
       </h1>
 
       <div className="max-w-6xl w-full">
 
-        {/* NOTÍCIA DESTAQUE */}
+        {/* DESTAQUE */}
 
         {destaque && (
 
           <Link href={`/news/${destaque.id}`}>
 
-            <div className="mb-16 rounded-xl overflow-hidden border border-red-800 hover:border-red-500 transition cursor-pointer shadow-[0_0_40px_rgba(255,0,0,0.15)]">
+            <div className="mb-16 rounded-xl overflow-hidden border border-red-800 hover:border-red-500 transition cursor-pointer">
 
-              {destaque.image && (
+              {/* PRIORIDADE: imagem > vídeo */}
+
+              {destaque.image ? (
                 <Image
                   src={destaque.image}
                   alt={destaque.title}
@@ -68,14 +91,17 @@ export default function NewsList() {
                   height={600}
                   className="w-full h-[450px] object-cover"
                 />
-              )}
-
-              {destaque.video && (
-                <img
-                  src={getVideoThumbnail(destaque.video)}
-                  className="w-full h-[450px] object-cover"
-                />
-              )}
+              ) : destaque.video ? (
+                (() => {
+                  const thumb = getVideoThumbnail(destaque.video);
+                  return thumb && (
+                    <img
+                      src={thumb}
+                      className="w-full h-[450px] object-cover"
+                    />
+                  );
+                })()
+              ) : null}
 
               <div className="p-8 bg-[#111]">
 
@@ -99,50 +125,56 @@ export default function NewsList() {
 
         )}
 
-        {/* OUTRAS NOTÍCIAS */}
+        {/* OUTRAS */}
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-          {outras.map((n) => (
+          {outras.map((n) => {
 
-            <Link key={n.id} href={`/news/${n.id}`}>
+            const thumb = getVideoThumbnail(n.video);
 
-              <div className="bg-[#111] border border-red-800 rounded-xl overflow-hidden hover:border-red-500 transition cursor-pointer hover:shadow-[0_0_25px_rgba(255,0,0,0.3)]">
+            return (
 
-                {n.image && (
-                  <Image
-                    src={n.image}
-                    alt={n.title}
-                    width={600}
-                    height={300}
-                    className="w-full h-[200px] object-cover"
-                  />
-                )}
+              <Link key={n.id} href={`/news/${n.id}`}>
 
-                {n.video && (
-                  <img
-                    src={getVideoThumbnail(n.video)}
-                    className="w-full h-[200px] object-cover"
-                  />
-                )}
+                <div className="bg-[#111] border border-red-800 rounded-xl overflow-hidden hover:border-red-500 transition cursor-pointer">
 
-                <div className="p-6">
+                  {/* PRIORIDADE: imagem > vídeo */}
 
-                  <h3 className="text-xl font-semibold mb-2">
-                    {n.title}
-                  </h3>
+                  {n.image ? (
+                    <Image
+                      src={n.image}
+                      alt={n.title}
+                      width={600}
+                      height={300}
+                      className="w-full h-[200px] object-cover"
+                    />
+                  ) : thumb ? (
+                    <img
+                      src={thumb}
+                      className="w-full h-[200px] object-cover"
+                    />
+                  ) : null}
 
-                  <p className="text-gray-400 text-sm">
-                    {n.content.slice(0, 120)}...
-                  </p>
+                  <div className="p-6">
+
+                    <h3 className="text-xl font-semibold mb-2">
+                      {n.title}
+                    </h3>
+
+                    <p className="text-gray-400 text-sm">
+                      {n.content.slice(0, 120)}...
+                    </p>
+
+                  </div>
 
                 </div>
 
-              </div>
+              </Link>
 
-            </Link>
+            );
 
-          ))}
+          })}
 
         </div>
 
