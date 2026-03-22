@@ -53,10 +53,31 @@ export default function Home() {
   const destaque = news[0];
   const outras = news.slice(1);
 
-  const getVideoThumbnail = (url: string) => {
-    const id = url.split("v=")[1];
+  // 🔥 YOUTUBE HELPERS
+
+  function getYoutubeId(url: string) {
+    try {
+      const parsed = new URL(url);
+
+      if (parsed.hostname.includes("youtube.com")) {
+        return parsed.searchParams.get("v");
+      }
+
+      if (parsed.hostname === "youtu.be") {
+        return parsed.pathname.slice(1);
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  function getVideoThumbnail(url: string) {
+    const id = getYoutubeId(url);
+    if (!id) return null;
     return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
-  };
+  }
 
   return (
 
@@ -75,7 +96,7 @@ export default function Home() {
           alt="Capivaros Logo"
           width={150}
           height={150}
-          className="mx-auto mb-8 drop-shadow-[0_0_25px_rgba(255,0,0,0.8)]"
+          className="mx-auto mb-8"
         />
 
         <h1 className="text-6xl font-extrabold text-red-500 mb-6">
@@ -117,7 +138,7 @@ export default function Home() {
           Últimas Notícias
         </h2>
 
-        {/* NOTÍCIA DESTAQUE */}
+        {/* DESTAQUE */}
 
         {destaque && (
 
@@ -125,7 +146,7 @@ export default function Home() {
 
             <div className="mb-12 rounded-xl overflow-hidden border border-red-800 hover:border-red-500 transition cursor-pointer">
 
-              {destaque.image && (
+              {destaque.image ? (
                 <Image
                   src={destaque.image}
                   alt={destaque.title}
@@ -133,14 +154,17 @@ export default function Home() {
                   height={500}
                   className="w-full h-[420px] object-cover"
                 />
-              )}
-
-              {destaque.video && (
-                <img
-                  src={getVideoThumbnail(destaque.video)}
-                  className="w-full h-[420px] object-cover"
-                />
-              )}
+              ) : destaque.video ? (
+                (() => {
+                  const thumb = getVideoThumbnail(destaque.video);
+                  return thumb && (
+                    <img
+                      src={thumb}
+                      className="w-full h-[420px] object-cover"
+                    />
+                  );
+                })()
+              ) : null}
 
               <div className="p-8 bg-[#111]">
 
@@ -160,54 +184,58 @@ export default function Home() {
 
         )}
 
-        {/* OUTRAS NOTÍCIAS */}
+        {/* OUTRAS */}
 
         <div className="grid md:grid-cols-2 gap-8">
 
-          {outras.map((n) => (
+          {outras.map((n) => {
 
-            <Link key={n.id} href={`/news/${n.id}`}>
+            const thumb = n.video ? getVideoThumbnail(n.video) : null;
 
-              <div className="bg-[#111] rounded-xl border border-red-800 overflow-hidden hover:border-red-500 transition cursor-pointer">
+            return (
 
-                {n.image && (
-                  <Image
-                    src={n.image}
-                    alt={n.title}
-                    width={600}
-                    height={300}
-                    className="w-full h-[200px] object-cover"
-                  />
-                )}
+              <Link key={n.id} href={`/news/${n.id}`}>
 
-                {n.video && (
-                  <img
-                    src={getVideoThumbnail(n.video)}
-                    className="w-full h-[200px] object-cover"
-                  />
-                )}
+                <div className="bg-[#111] rounded-xl border border-red-800 overflow-hidden hover:border-red-500 transition cursor-pointer">
 
-                <div className="p-6">
+                  {n.image ? (
+                    <Image
+                      src={n.image}
+                      alt={n.title}
+                      width={600}
+                      height={300}
+                      className="w-full h-[200px] object-cover"
+                    />
+                  ) : thumb ? (
+                    <img
+                      src={thumb}
+                      className="w-full h-[200px] object-cover"
+                    />
+                  ) : null}
 
-                  <h4 className="text-xl font-semibold mb-2">
-                    {n.title}
-                  </h4>
+                  <div className="p-6">
 
-                  <p className="text-gray-400 text-sm">
-                    {n.content.slice(0, 120)}...
-                  </p>
+                    <h4 className="text-xl font-semibold mb-2">
+                      {n.title}
+                    </h4>
+
+                    <p className="text-gray-400 text-sm">
+                      {n.content.slice(0, 120)}...
+                    </p>
+
+                  </div>
 
                 </div>
 
-              </div>
+              </Link>
 
-            </Link>
+            );
 
-          ))}
+          })}
 
         </div>
 
-        {/* VER MAIS NOTÍCIAS */}
+        {/* VER MAIS */}
 
         <div className="text-center mt-12">
 
