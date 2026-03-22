@@ -1,8 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+
+import {
+  doc,
+  setDoc,
+  getDoc
+} from "firebase/firestore";
+
+import {
+  onAuthStateChanged
+} from "firebase/auth";
+
 import { useRouter } from "next/navigation";
 
 export default function CompleteProfile() {
@@ -10,9 +20,53 @@ export default function CompleteProfile() {
   const [username, setUsername] = useState("");
   const [discord, setDiscord] = useState("");
   const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const router = useRouter();
 
+  // 🔒 BLOQUEIO DE ACESSO
+  useEffect(() => {
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      try {
+
+        const ref = doc(db, "users", user.uid);
+        const snap = await getDoc(ref);
+
+        // 🔥 Se já tem perfil → manda pro dashboard
+        if (snap.exists() && snap.data().username) {
+          router.push("/dashboard");
+        } else {
+          setLoading(false);
+        }
+
+      } catch (error) {
+        console.error("Erro ao verificar perfil:", error);
+        setLoading(false);
+      }
+
+    });
+
+    return () => unsubscribe();
+
+  }, [router]);
+
+  // 🔄 LOADING
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        Carregando...
+      </div>
+    );
+  }
+
+  // 📝 SUBMIT
   const handleSubmit = async (e: any) => {
 
     e.preventDefault();
@@ -25,15 +79,16 @@ export default function CompleteProfile() {
       const ref = doc(db, "users", user.uid);
 
       await setDoc(ref, {
-
         username,
         discord,
         phone,
 
-        role: "visitor",   // ainda não entrou na guilda
-        games: []          // jogos que participa
+        role: "visitor",
+        games: [],
+        profileCompleted: true, // 🔥 importante
 
-      }, { merge: true });
+        createdAt: new Date()
+      });
 
       router.push("/dashboard");
 
@@ -64,8 +119,6 @@ export default function CompleteProfile() {
 
           <form onSubmit={handleSubmit}>
 
-            {/* USERNAME */}
-
             <input
               type="text"
               placeholder="Nome de usuário no site"
@@ -75,8 +128,6 @@ export default function CompleteProfile() {
               required
             />
 
-            {/* DISCORD */}
-
             <input
               type="text"
               placeholder="Discord (ex: Ruanzito#1234)"
@@ -85,8 +136,6 @@ export default function CompleteProfile() {
               className="w-full mb-4 p-3 bg-[#1c1c1c] border border-red-900 rounded-lg"
               required
             />
-
-            {/* TELEFONE */}
 
             <input
               type="tel"
