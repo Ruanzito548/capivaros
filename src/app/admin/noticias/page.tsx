@@ -9,7 +9,8 @@ import {
   doc,
   orderBy,
   query,
-  getDoc
+  getDoc,
+  setDoc
 } from "firebase/firestore";
 
 import { auth, db } from "@/lib/firebase";
@@ -27,6 +28,9 @@ export default function NoticiasAdmin() {
 
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // 🔥 NOVO: controle de edição
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -49,17 +53,13 @@ export default function NoticiasAdmin() {
         const snap = await getDoc(userRef);
 
         if (!snap.exists()) {
-          console.warn("Usuário não encontrado");
           router.push("/");
           return;
         }
 
         const data = snap.data();
 
-        console.log("USER DATA:", data);
-
         if (!canCreateNews(data.role)) {
-          console.warn("Sem permissão para criar notícias");
           router.push("/");
           return;
         }
@@ -131,11 +131,7 @@ export default function NoticiasAdmin() {
         createdAt: new Date()
       });
 
-      setTitle("");
-      setContent("");
-      setImage("");
-      setVideo("");
-
+      resetForm();
       await fetchNews();
 
       alert("Notícia publicada!");
@@ -144,6 +140,43 @@ export default function NoticiasAdmin() {
 
       console.error("Erro ao criar notícia:", error);
       alert("Erro ao publicar.");
+
+    }
+
+  };
+
+  // -----------------------
+  // Atualizar notícia
+  // -----------------------
+
+  const updateNews = async () => {
+
+    try {
+
+      if (!editingId) return;
+
+      if (!title.trim() || !content.trim()) {
+        alert("Preencha título e conteúdo.");
+        return;
+      }
+
+      await setDoc(doc(db, "news", editingId), {
+        title,
+        content,
+        image,
+        video,
+        updatedAt: new Date()
+      }, { merge: true });
+
+      resetForm();
+      await fetchNews();
+
+      alert("Notícia atualizada!");
+
+    } catch (error) {
+
+      console.error("Erro ao atualizar notícia:", error);
+      alert("Erro ao atualizar.");
 
     }
 
@@ -160,7 +193,6 @@ export default function NoticiasAdmin() {
       if (!confirm("Excluir essa notícia?")) return;
 
       await deleteDoc(doc(db, "news", id));
-
       await fetchNews();
 
     } catch (error) {
@@ -170,6 +202,18 @@ export default function NoticiasAdmin() {
 
     }
 
+  };
+
+  // -----------------------
+  // Reset form
+  // -----------------------
+
+  const resetForm = () => {
+    setEditingId(null);
+    setTitle("");
+    setContent("");
+    setImage("");
+    setVideo("");
   };
 
   // -----------------------
@@ -190,13 +234,13 @@ export default function NoticiasAdmin() {
 
       <div className="max-w-5xl w-full">
 
-        <h1 className="text-4xl font-bold text-red-500 mb-10 drop-shadow-[0_0_10px_rgba(255,0,0,0.7)]">
+        <h1 className="text-4xl font-bold text-red-500 mb-10">
           Gerenciar Notícias
         </h1>
 
         {/* FORM */}
 
-        <div className="flex flex-col gap-4 bg-[#111] p-6 border border-red-800 rounded-xl mb-12 shadow-[0_0_20px_rgba(255,0,0,0.15)]">
+        <div className="flex flex-col gap-4 bg-[#111] p-6 border border-red-800 rounded-xl mb-12">
 
           <input
             type="text"
@@ -230,10 +274,14 @@ export default function NoticiasAdmin() {
           />
 
           <button
-            onClick={createNews}
-            className="bg-red-700 p-3 rounded hover:bg-red-800 transition shadow-[0_0_10px_rgba(255,0,0,0.5)]"
+            onClick={editingId ? updateNews : createNews}
+            className={`p-3 rounded transition ${
+              editingId
+                ? "bg-yellow-600 hover:bg-yellow-700"
+                : "bg-red-700 hover:bg-red-800"
+            }`}
           >
-            Publicar Notícia
+            {editingId ? "Salvar Edição" : "Publicar Notícia"}
           </button>
 
         </div>
@@ -250,7 +298,7 @@ export default function NoticiasAdmin() {
 
             <div
               key={n.id}
-              className="bg-[#111] border border-red-800 p-6 rounded-xl shadow-[0_0_15px_rgba(255,0,0,0.15)]"
+              className="bg-[#111] border border-red-800 p-6 rounded-xl"
             >
 
               <h3 className="text-xl font-bold mb-2">
@@ -278,12 +326,33 @@ export default function NoticiasAdmin() {
                 </div>
               )}
 
-              <button
-                onClick={() => deleteNews(n.id)}
-                className="bg-red-700 px-4 py-2 rounded hover:bg-red-800 transition"
-              >
-                Excluir
-              </button>
+              {/* BOTÕES */}
+
+              <div className="flex gap-2">
+
+                <button
+                  onClick={() => {
+                    setEditingId(n.id);
+                    setTitle(n.title);
+                    setContent(n.content);
+                    setImage(n.image || "");
+                    setVideo(n.video || "");
+
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="bg-yellow-600 px-4 py-2 rounded hover:bg-yellow-700 transition"
+                >
+                  Editar
+                </button>
+
+                <button
+                  onClick={() => deleteNews(n.id)}
+                  className="bg-red-700 px-4 py-2 rounded hover:bg-red-800 transition"
+                >
+                  Excluir
+                </button>
+
+              </div>
 
             </div>
 
