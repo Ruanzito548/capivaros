@@ -30,7 +30,12 @@ export default function NewsPage() {
   const [userName, setUserName] = useState("");
   const [loadingUser, setLoadingUser] = useState(true);
 
-  // 🔥 YOUTUBE HELPERS
+  // 🔥 NOVO: controle do player
+  const [playVideo, setPlayVideo] = useState(false);
+
+  // -----------------------
+  // YOUTUBE HELPERS
+  // -----------------------
 
   function getYoutubeId(url: string) {
     try {
@@ -55,6 +60,14 @@ export default function NewsPage() {
     if (!id) return null;
     return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
   }
+
+  function getYoutubeEmbed(url: string) {
+    const id = getYoutubeId(url);
+    if (!id) return url;
+    return `https://www.youtube.com/embed/${id}?autoplay=1`;
+  }
+
+  // -----------------------
 
   const formatDate = (date: any) => {
     if (!date) return "";
@@ -176,24 +189,38 @@ export default function NewsPage() {
           />
         )}
 
-        {/* 🔥 PLAYER INTELIGENTE */}
+        {/* 🎬 PLAYER INTELIGENTE */}
         {news.video && thumb && (
 
           <div className="mb-12">
 
-            <div
-              className="relative cursor-pointer"
-              onClick={() => window.open(news.video, "_blank")}
-            >
-              <img src={thumb} className="rounded-xl w-full" />
+            {!playVideo ? (
 
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-red-600 p-5 rounded-full text-2xl">
-                  ▶
+              <div
+                className="relative cursor-pointer"
+                onClick={() => setPlayVideo(true)}
+              >
+                <img src={thumb} className="rounded-xl w-full" />
+
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-red-600 p-5 rounded-full text-2xl">
+                    ▶
+                  </div>
                 </div>
               </div>
-            </div>
 
+            ) : (
+
+              <iframe
+                src={getYoutubeEmbed(news.video)}
+                className="w-full h-[450px] rounded-xl"
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+              />
+
+            )}
+
+            {/* 🔥 fallback */}
             <a
               href={news.video}
               target="_blank"
