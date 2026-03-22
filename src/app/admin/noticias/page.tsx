@@ -38,33 +38,47 @@ export default function NoticiasAdmin() {
 
     const unsub = onAuthStateChanged(auth, async (user) => {
 
-      if (!user) {
+      try {
+
+        if (!user) {
+          router.push("/");
+          return;
+        }
+
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+
+        if (!snap.exists()) {
+          console.warn("Usuário não encontrado");
+          router.push("/");
+          return;
+        }
+
+        const data = snap.data();
+
+        console.log("USER DATA:", data);
+
+        if (!canCreateNews(data.role)) {
+          console.warn("Sem permissão para criar notícias");
+          router.push("/");
+          return;
+        }
+
+        await fetchNews();
+        setLoading(false);
+
+      } catch (error) {
+
+        console.error("ERRO PERMISSÃO NOTÍCIAS:", error);
         router.push("/");
-        return;
+
       }
-
-      const snap = await getDoc(doc(db, "users", user.uid));
-
-      if (!snap.exists()) {
-        router.push("/");
-        return;
-      }
-
-      const data = snap.data();
-
-      if (!canCreateNews(data.role)) {
-        router.push("/");
-        return;
-      }
-
-      fetchNews();
-      setLoading(false);
 
     });
 
     return () => unsub();
 
-  }, []);
+  }, [router]);
 
   // -----------------------
   // Buscar notícias
@@ -72,19 +86,27 @@ export default function NoticiasAdmin() {
 
   const fetchNews = async () => {
 
-    const q = query(
-      collection(db, "news"),
-      orderBy("createdAt", "desc")
-    );
+    try {
 
-    const snap = await getDocs(q);
+      const q = query(
+        collection(db, "news"),
+        orderBy("createdAt", "desc")
+      );
 
-    const list = snap.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+      const snap = await getDocs(q);
 
-    setNews(list);
+      const list = snap.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
+
+      setNews(list);
+
+    } catch (error) {
+
+      console.error("Erro ao buscar notícias:", error);
+
+    }
 
   };
 
@@ -94,29 +116,36 @@ export default function NoticiasAdmin() {
 
   const createNews = async () => {
 
-    if (!title.trim() || !content.trim()) {
-      alert("Preencha título e conteúdo.");
-      return;
+    try {
+
+      if (!title.trim() || !content.trim()) {
+        alert("Preencha título e conteúdo.");
+        return;
+      }
+
+      await addDoc(collection(db, "news"), {
+        title,
+        content,
+        image,
+        video,
+        createdAt: new Date()
+      });
+
+      setTitle("");
+      setContent("");
+      setImage("");
+      setVideo("");
+
+      await fetchNews();
+
+      alert("Notícia publicada!");
+
+    } catch (error) {
+
+      console.error("Erro ao criar notícia:", error);
+      alert("Erro ao publicar.");
+
     }
-
-    await addDoc(collection(db, "news"), {
-
-      title,
-      content,
-      image,
-      video,
-      createdAt: new Date()
-
-    });
-
-    setTitle("");
-    setContent("");
-    setImage("");
-    setVideo("");
-
-    fetchNews();
-
-    alert("Notícia publicada!");
 
   };
 
@@ -126,22 +155,33 @@ export default function NoticiasAdmin() {
 
   const deleteNews = async (id: string) => {
 
-    if (!confirm("Excluir essa notícia?")) return;
+    try {
 
-    await deleteDoc(doc(db, "news", id));
+      if (!confirm("Excluir essa notícia?")) return;
 
-    fetchNews();
+      await deleteDoc(doc(db, "news", id));
+
+      await fetchNews();
+
+    } catch (error) {
+
+      console.error("Erro ao excluir notícia:", error);
+      alert("Erro ao excluir.");
+
+    }
 
   };
 
-  if (loading) {
+  // -----------------------
+  // Loading
+  // -----------------------
 
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black text-white">
         Carregando painel...
       </div>
     );
-
   }
 
   return (
@@ -198,7 +238,7 @@ export default function NoticiasAdmin() {
 
         </div>
 
-        {/* LISTA DE NOTÍCIAS */}
+        {/* LISTA */}
 
         <h2 className="text-2xl mb-6 text-red-400">
           Notícias Publicadas
@@ -222,26 +262,20 @@ export default function NoticiasAdmin() {
               </p>
 
               {n.image && (
-
                 <img
                   src={n.image}
                   className="rounded mb-4 max-h-60 object-cover"
                 />
-
               )}
 
               {n.video && (
-
                 <div className="mb-4">
-
                   <iframe
                     src={n.video.replace("watch?v=", "embed/")}
                     className="w-full h-64 rounded"
                     allowFullScreen
                   />
-
                 </div>
-
               )}
 
               <button

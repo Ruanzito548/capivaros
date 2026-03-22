@@ -31,33 +31,52 @@ export default function GerenciarCargos() {
 
     const unsub = onAuthStateChanged(auth, async (user) => {
 
-      if (!user) {
+      try {
+
+        // ❌ não logado
+        if (!user) {
+          router.push("/");
+          return;
+        }
+
+        // 🔍 buscar user atual
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+
+        if (!snap.exists()) {
+          console.warn("Usuário não encontrado");
+          router.push("/");
+          return;
+        }
+
+        const data = snap.data();
+
+        console.log("USER DATA:", data);
+
+        // ❌ sem permissão
+        if (!canManageRoles(data.role)) {
+          console.warn("Sem permissão para gerenciar cargos");
+          router.push("/");
+          return;
+        }
+
+        // ✅ carregar usuários
+        await fetchUsers();
+
+        setLoading(false);
+
+      } catch (error) {
+
+        console.error("ERRO PERMISSÃO CARGOS:", error);
         router.push("/");
-        return;
+
       }
-
-      const snap = await getDoc(doc(db, "users", user.uid));
-
-      if (!snap.exists()) {
-        router.push("/");
-        return;
-      }
-
-      const data = snap.data();
-
-      if (!canManageRoles(data.role)) {
-        router.push("/");
-        return;
-      }
-
-      await fetchUsers();
-      setLoading(false);
 
     });
 
     return () => unsub();
 
-  }, []);
+  }, [router]);
 
   // ------------------------
   // buscar usuários
@@ -65,14 +84,22 @@ export default function GerenciarCargos() {
 
   const fetchUsers = async () => {
 
-    const snap = await getDocs(collection(db, "users"));
+    try {
 
-    const list = snap.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+      const snap = await getDocs(collection(db, "users"));
 
-    setUsers(list);
+      const list = snap.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
+
+      setUsers(list);
+
+    } catch (error) {
+
+      console.error("Erro ao buscar usuários:", error);
+
+    }
 
   };
 
@@ -82,22 +109,43 @@ export default function GerenciarCargos() {
 
   const changeRole = async (userId: string, role: string) => {
 
-    await updateDoc(doc(db, "users", userId), {
-      role: role
-    });
+    try {
 
-    fetchUsers();
+      // 🔒 proteção básica (evita besteira)
+      const allowedRoles = ["recruit", "member", "vip", "editor", "admin"];
+
+      if (!allowedRoles.includes(role)) {
+        alert("Cargo inválido");
+        return;
+      }
+
+      await updateDoc(doc(db, "users", userId), {
+        role
+      });
+
+      alert("Cargo atualizado!");
+
+      fetchUsers();
+
+    } catch (error) {
+
+      console.error("Erro ao atualizar cargo:", error);
+      alert("Erro ao atualizar cargo.");
+
+    }
 
   };
 
-  if (loading) {
+  // ------------------------
+  // loading
+  // ------------------------
 
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black text-white">
         Verificando permissões...
       </div>
     );
-
   }
 
   return (

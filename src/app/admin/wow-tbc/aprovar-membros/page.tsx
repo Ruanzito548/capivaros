@@ -24,100 +24,151 @@ export default function AprovarMembrosWOWTBC() {
 
     const unsub = onAuthStateChanged(auth, async (user) => {
 
-      if (!user) {
+      try {
+
+        // ❌ não logado
+        if (!user) {
+          router.push("/");
+          return;
+        }
+
+        // 🔍 busca usuário atual
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+
+        if (!snap.exists()) {
+          console.warn("Usuário não encontrado");
+          router.push("/");
+          return;
+        }
+
+        const data = snap.data();
+
+        console.log("USER DATA:", data);
+
+        // ❌ sem permissão
+        if (!canApproveMembers(data.role)) {
+          console.warn("Sem permissão para aprovar membros");
+          router.push("/");
+          return;
+        }
+
+        // ✅ carrega lista
+        await fetchUsers();
+
+        setLoading(false);
+
+      } catch (error) {
+
+        console.error("ERRO AO VERIFICAR PERMISSÃO:", error);
         router.push("/");
-        return;
+
       }
-
-      const snap = await getDoc(doc(db, "users", user.uid));
-
-      if (!snap.exists()) {
-        router.push("/");
-        return;
-      }
-
-      const data = snap.data();
-
-      if (!canApproveMembers(data.role)) {
-        router.push("/");
-        return;
-      }
-
-      await fetchUsers();
-      setLoading(false);
 
     });
 
     return () => unsub();
 
-  }, []);
+  }, [router]);
 
+  // 🔥 BUSCAR USUÁRIOS
   const fetchUsers = async () => {
 
-    const snap = await getDocs(collection(db, "users"));
+    try {
 
-    const list = snap.docs
-      .map((doc) => ({
-        id: doc.id,
-        ...doc.data()
-      }))
-      .filter((user: any) =>
-        user.applications?.["wow-tbc"]?.status === "pending"
-      );
+      const snap = await getDocs(collection(db, "users"));
 
-    setUsers(list);
+      const list = snap.docs
+        .map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }))
+        .filter((user: any) =>
+          user.applications?.["wow-tbc"]?.status === "pending"
+        );
+
+      setUsers(list);
+
+    } catch (error) {
+
+      console.error("Erro ao buscar usuários:", error);
+
+    }
 
   };
 
+  // ✅ APROVAR
   const approveUser = async (user: any) => {
 
-    const ref = doc(db, "users", user.id);
+    try {
 
-    const updatedApplications = {
-      ...user.applications,
-      "wow-tbc": {
-        ...user.applications["wow-tbc"],
-        status: "approved"
-      }
-    };
+      const ref = doc(db, "users", user.id);
 
-    await updateDoc(ref, {
-      role: "member",
-      applications: updatedApplications
-    });
+      const updatedApplications = {
+        ...user.applications,
+        "wow-tbc": {
+          ...user.applications?.["wow-tbc"],
+          status: "approved"
+        }
+      };
 
-    fetchUsers();
+      await updateDoc(ref, {
+        role: "member",
+        applications: updatedApplications
+      });
+
+      alert("Membro aprovado com sucesso.");
+
+      fetchUsers();
+
+    } catch (error) {
+
+      console.error("Erro ao aprovar usuário:", error);
+      alert("Erro ao aprovar usuário.");
+
+    }
 
   };
 
+  // ❌ REJEITAR
   const rejectUser = async (user: any) => {
 
-    const ref = doc(db, "users", user.id);
+    try {
 
-    const updatedApplications = {
-      ...user.applications,
-      "wow-tbc": {
-        ...user.applications["wow-tbc"],
-        status: "rejected"
-      }
-    };
+      const ref = doc(db, "users", user.id);
 
-    await updateDoc(ref, {
-      applications: updatedApplications
-    });
+      const updatedApplications = {
+        ...user.applications,
+        "wow-tbc": {
+          ...user.applications?.["wow-tbc"],
+          status: "rejected"
+        }
+      };
 
-    fetchUsers();
+      await updateDoc(ref, {
+        applications: updatedApplications
+      });
+
+      alert("Membro rejeitado.");
+
+      fetchUsers();
+
+    } catch (error) {
+
+      console.error("Erro ao rejeitar usuário:", error);
+      alert("Erro ao rejeitar.");
+
+    }
 
   };
 
+  // 🔄 LOADING
   if (loading) {
-
     return (
       <div className="min-h-screen flex items-center justify-center bg-black text-white">
         Verificando permissões...
       </div>
     );
-
   }
 
   return (
@@ -133,11 +184,9 @@ export default function AprovarMembrosWOWTBC() {
         <div className="space-y-6">
 
           {users.length === 0 && (
-
             <p className="text-gray-400">
               Nenhuma aplicação pendente.
             </p>
-
           )}
 
           {users.map((user) => {

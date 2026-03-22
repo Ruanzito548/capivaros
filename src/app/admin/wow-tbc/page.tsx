@@ -18,43 +18,63 @@ export default function AdminWOWTBC() {
 
     const unsub = onAuthStateChanged(auth, async (user) => {
 
-      if (!user) {
+      try {
+
+        // ❌ não logado
+        if (!user) {
+          router.push("/");
+          return;
+        }
+
+        // 🔍 busca usuário
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+
+        // ❌ não existe no banco
+        if (!snap.exists()) {
+          console.warn("Usuário não encontrado no Firestore");
+          router.push("/");
+          return;
+        }
+
+        const data = snap.data();
+
+        console.log("USER DATA:", data);
+
+        // ❌ não é admin
+        if (!isAdmin(data.role)) {
+          console.warn("Usuário não é admin");
+          router.push("/");
+          return;
+        }
+
+        // ✅ liberado
+        setLoading(false);
+
+      } catch (error) {
+
+        console.error("ERRO ADMIN WOW TBC:", error);
+
+        // evita travar loading infinito
         router.push("/");
-        return;
       }
-
-      const snap = await getDoc(doc(db, "users", user.uid));
-
-      if (!snap.exists()) {
-        router.push("/");
-        return;
-      }
-
-      const data = snap.data();
-
-      if (!isAdmin(data.role)) {
-        router.push("/");
-        return;
-      }
-
-      setLoading(false);
 
     });
 
     return () => unsub();
 
-  }, []);
+  }, [router]);
 
+  // 🔄 loading
   if (loading) {
-
     return (
       <div className="min-h-screen flex items-center justify-center bg-black text-white">
         Verificando permissões...
       </div>
     );
-
   }
 
+  // ✅ página liberada
   return (
 
     <div className="min-h-screen bg-[#0b0b0b] text-white px-6 py-16 flex justify-center">
@@ -85,7 +105,6 @@ export default function AdminWOWTBC() {
             href="/admin/wow-tbc/aprovar-membros"
             className="group bg-[#111] border border-red-800 rounded-xl p-8 hover:border-red-500 hover:shadow-[0_0_35px_rgba(255,0,0,0.6)] transition"
           >
-
             <div className="text-4xl mb-4">👥</div>
 
             <h2 className="text-xl font-bold mb-2 group-hover:text-red-400">
@@ -95,7 +114,6 @@ export default function AdminWOWTBC() {
             <p className="text-gray-400 text-sm">
               Revisar aplicações de entrada na guilda.
             </p>
-
           </Link>
 
           {/* APROVAR PERSONAGENS */}
@@ -104,7 +122,6 @@ export default function AdminWOWTBC() {
             href="/admin/wow-tbc/aprovar-personagens"
             className="group bg-[#111] border border-red-800 rounded-xl p-8 hover:border-red-500 hover:shadow-[0_0_35px_rgba(255,0,0,0.6)] transition"
           >
-
             <div className="text-4xl mb-4">⚔️</div>
 
             <h2 className="text-xl font-bold mb-2 group-hover:text-red-400">
@@ -114,7 +131,6 @@ export default function AdminWOWTBC() {
             <p className="text-gray-400 text-sm">
               Validar personagens enviados pelos membros.
             </p>
-
           </Link>
 
           {/* RANKING FUTURO */}

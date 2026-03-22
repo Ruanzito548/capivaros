@@ -18,43 +18,62 @@ export default function AdminPage() {
 
     const unsub = onAuthStateChanged(auth, async (user) => {
 
-      if (!user) {
+      try {
+
+        // ❌ não logado → manda embora
+        if (!user) {
+          router.push("/");
+          return;
+        }
+
+        // 🔍 busca dados do usuário
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+
+        // ❌ não existe no banco
+        if (!snap.exists()) {
+          console.warn("Usuário não encontrado no Firestore");
+          router.push("/");
+          return;
+        }
+
+        const data = snap.data();
+
+        console.log("USER DATA:", data);
+
+        // ❌ não é admin
+        if (!isAdmin(data.role)) {
+          console.warn("Usuário não é admin");
+          router.push("/");
+          return;
+        }
+
+        // ✅ passou tudo
+        setLoading(false);
+
+      } catch (error) {
+        console.error("ERRO NA VERIFICAÇÃO:", error);
+
+        // evita travar infinito
         router.push("/");
-        return;
       }
-
-      const snap = await getDoc(doc(db, "users", user.uid));
-
-      if (!snap.exists()) {
-        router.push("/");
-        return;
-      }
-
-      const data = snap.data();
-
-      if (!isAdmin(data.role)) {
-        router.push("/");
-        return;
-      }
-
-      setLoading(false);
 
     });
 
     return () => unsub();
 
-  }, []);
+  }, [router]);
 
+  // 🔄 loading
   if (loading) {
-
     return (
       <div className="min-h-screen flex items-center justify-center bg-black text-white">
         Verificando permissões...
       </div>
     );
-
   }
 
+  // ✅ conteúdo liberado
   return (
 
     <div className="min-h-screen bg-[#0b0b0b] text-white px-6 py-16 flex justify-center">
@@ -75,13 +94,10 @@ export default function AdminPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
 
-          {/* WOW TBC */}
-
           <Link
             href="/admin/wow-tbc"
             className="group bg-[#111] border border-red-800 rounded-xl p-10 hover:border-red-500 hover:shadow-[0_0_40px_rgba(255,0,0,0.6)] transition"
           >
-
             <div className="text-5xl mb-6">🐉</div>
 
             <h2 className="text-2xl font-bold mb-3 group-hover:text-red-400">
@@ -91,16 +107,12 @@ export default function AdminPage() {
             <p className="text-gray-400">
               Gerenciar membros, personagens e atividades da guilda.
             </p>
-
           </Link>
-
-          {/* LEAGUE OF LEGENDS */}
 
           <Link
             href="/admin/lol"
             className="group bg-[#111] border border-red-800 rounded-xl p-10 hover:border-red-500 hover:shadow-[0_0_40px_rgba(255,0,0,0.6)] transition"
           >
-
             <div className="text-5xl mb-6">⚔️</div>
 
             <h2 className="text-2xl font-bold mb-3 group-hover:text-red-400">
@@ -110,7 +122,6 @@ export default function AdminPage() {
             <p className="text-gray-400">
               Aprovar jogadores e gerenciar membros do time.
             </p>
-
           </Link>
 
         </div>
@@ -125,13 +136,10 @@ export default function AdminPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-          {/* GERENCIAR NOTÍCIAS */}
-
           <Link
             href="/admin/noticias"
             className="group bg-[#111] border border-red-800 rounded-xl p-8 hover:border-red-500 hover:shadow-[0_0_30px_rgba(255,0,0,0.5)] transition"
           >
-
             <div className="text-4xl mb-4">📰</div>
 
             <h2 className="text-xl font-bold mb-2 group-hover:text-red-400">
@@ -141,16 +149,12 @@ export default function AdminPage() {
             <p className="text-gray-400 text-sm">
               Criar, editar e remover notícias da guilda
             </p>
-
           </Link>
-
-          {/* GERENCIAR CARGOS */}
 
           <Link
             href="/admin/gerenciar-cargos"
             className="group bg-[#111] border border-red-800 rounded-xl p-8 hover:border-red-500 hover:shadow-[0_0_30px_rgba(255,0,0,0.5)] transition"
           >
-
             <div className="text-4xl mb-4">🛡️</div>
 
             <h2 className="text-xl font-bold mb-2 group-hover:text-red-400">
@@ -160,7 +164,6 @@ export default function AdminPage() {
             <p className="text-gray-400 text-sm">
               Alterar cargos dos membros da guilda
             </p>
-
           </Link>
 
         </div>

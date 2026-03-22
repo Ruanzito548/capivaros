@@ -18,41 +18,59 @@ export default function AdminLOL() {
 
     const unsub = onAuthStateChanged(auth, async (user) => {
 
-      if (!user) {
+      try {
+
+        // ❌ não logado
+        if (!user) {
+          router.push("/");
+          return;
+        }
+
+        // 🔍 busca usuário
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+
+        // ❌ não existe
+        if (!snap.exists()) {
+          console.warn("Usuário não encontrado");
+          router.push("/");
+          return;
+        }
+
+        const data = snap.data();
+
+        console.log("USER DATA:", data);
+
+        // ❌ não é admin
+        if (!isAdmin(data.role)) {
+          console.warn("Usuário não é admin");
+          router.push("/");
+          return;
+        }
+
+        // ✅ liberado
+        setLoading(false);
+
+      } catch (error) {
+
+        console.error("ERRO ADMIN LOL:", error);
         router.push("/");
-        return;
+
       }
-
-      const snap = await getDoc(doc(db, "users", user.uid));
-
-      if (!snap.exists()) {
-        router.push("/");
-        return;
-      }
-
-      const data = snap.data();
-
-      if (!isAdmin(data.role)) {
-        router.push("/");
-        return;
-      }
-
-      setLoading(false);
 
     });
 
     return () => unsub();
 
-  }, []);
+  }, [router]);
 
+  // 🔄 loading
   if (loading) {
-
     return (
       <div className="min-h-screen flex items-center justify-center bg-black text-white">
         Verificando permissões...
       </div>
     );
-
   }
 
   return (
@@ -86,13 +104,12 @@ export default function AdminLOL() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-          {/* APROVAR MEMBROS */}
+          {/* APROVAR JOGADORES */}
 
           <Link
             href="/admin/lol/aprovar-membros"
             className="group bg-[#111] border border-red-800 rounded-xl p-8 hover:border-red-500 hover:shadow-[0_0_35px_rgba(255,0,0,0.6)] transition"
           >
-
             <div className="text-4xl mb-4">👥</div>
 
             <h2 className="text-xl font-bold mb-2 group-hover:text-red-400">
@@ -102,13 +119,11 @@ export default function AdminLOL() {
             <p className="text-gray-400 text-sm">
               Revisar e aprovar aplicações de novos jogadores.
             </p>
-
           </Link>
 
-          {/* RANKING FUTURO */}
+          {/* RANKING */}
 
           <div className="bg-[#111] border border-red-900 rounded-xl p-8 opacity-60">
-
             <div className="text-4xl mb-4">📊</div>
 
             <h2 className="text-xl font-bold mb-2">
@@ -118,13 +133,11 @@ export default function AdminLOL() {
             <p className="text-gray-400 text-sm">
               Em breve: ranking de jogadores.
             </p>
-
           </div>
 
-          {/* ESTATÍSTICAS FUTURO */}
+          {/* ESTATÍSTICAS */}
 
           <div className="bg-[#111] border border-red-900 rounded-xl p-8 opacity-60">
-
             <div className="text-4xl mb-4">🏆</div>
 
             <h2 className="text-xl font-bold mb-2">
@@ -134,7 +147,6 @@ export default function AdminLOL() {
             <p className="text-gray-400 text-sm">
               Em breve: dados e desempenho do time.
             </p>
-
           </div>
 
         </div>

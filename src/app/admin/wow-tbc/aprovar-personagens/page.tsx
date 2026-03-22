@@ -26,66 +26,93 @@ export default function AprovarPersonagens() {
 
     const unsub = onAuthStateChanged(auth, async (user) => {
 
-      if (!user) {
+      try {
+
+        // ❌ não logado
+        if (!user) {
+          router.push("/");
+          return;
+        }
+
+        // 🔍 pega usuário
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+
+        if (!snap.exists()) {
+          console.warn("Usuário não encontrado");
+          router.push("/");
+          return;
+        }
+
+        const data = snap.data();
+
+        console.log("USER DATA:", data);
+
+        // ❌ sem permissão
+        if (!canApproveCharacters(data.role)) {
+          console.warn("Sem permissão para aprovar personagens");
+          router.push("/");
+          return;
+        }
+
+        // ✅ busca requests
+        await fetchRequests();
+
+        setLoading(false);
+
+      } catch (error) {
+
+        console.error("ERRO AO VERIFICAR PERMISSÃO:", error);
         router.push("/");
-        return;
+
       }
-
-      const snap = await getDoc(doc(db, "users", user.uid));
-
-      if (!snap.exists()) {
-        router.push("/");
-        return;
-      }
-
-      const data = snap.data();
-
-      if (!canApproveCharacters(data.role)) {
-        router.push("/");
-        return;
-      }
-
-      await fetchRequests();
-      setLoading(false);
 
     });
 
     return () => unsub();
 
-  }, []);
+  }, [router]);
 
+  // 🔥 BUSCAR REQUESTS
   const fetchRequests = async () => {
 
-    const q = query(collection(db, "characterRequests"), where("status", "==", "pending"));
-    const snap = await getDocs(q);
+    try {
 
-    const list: any[] = [];
+      const q = query(
+        collection(db, "characterRequests"),
+        where("status", "==", "pending")
+      );
 
-    snap.docs.forEach((docSnap) => {
+      const snap = await getDocs(q);
 
-      const data: any = docSnap.data();
+      const list: any[] = [];
 
-      list.push({
-        id: docSnap.id,
-        ...data
+      snap.docs.forEach((docSnap) => {
+        list.push({
+          id: docSnap.id,
+          ...docSnap.data()
+        });
       });
 
-    });
+      setRequests(list);
 
-    setRequests(list);
+    } catch (error) {
+      console.error("Erro ao buscar requests:", error);
+    }
 
   };
 
+  // ✅ APROVAR
   const approveCharacter = async (req: any) => {
 
     try {
 
-      // Update request status
+      // update status
       await updateDoc(doc(db, "characterRequests", req.id), {
         status: "approved"
       });
 
-      // Add to user's characters
+      // pega usuário
       const userRef = doc(db, "users", req.userId);
       const userSnap = await getDoc(userRef);
 
@@ -95,7 +122,10 @@ export default function AprovarPersonagens() {
       }
 
       const userData = userSnap.data();
-      const characters = Array.isArray(userData?.characters) ? userData.characters : [];
+
+      const characters = Array.isArray(userData?.characters)
+        ? userData.characters
+        : [];
 
       characters.push({
         name: req.name,
@@ -103,37 +133,49 @@ export default function AprovarPersonagens() {
       });
 
       await updateDoc(userRef, {
-        characters: characters
+        characters
       });
 
       alert("Personagem aprovado com sucesso.");
+
       fetchRequests();
 
     } catch (error) {
+
       console.error("Erro ao aprovar personagem:", error);
-      alert("Erro ao aprovar personagem. Verifique o console.");
+      alert("Erro ao aprovar personagem.");
+
     }
 
   };
 
+  // ❌ REJEITAR
   const rejectCharacter = async (req: any) => {
 
-    await updateDoc(doc(db, "characterRequests", req.id), {
-      status: "rejected"
-    });
+    try {
 
-    fetchRequests();
+      await updateDoc(doc(db, "characterRequests", req.id), {
+        status: "rejected"
+      });
+
+      fetchRequests();
+
+    } catch (error) {
+
+      console.error("Erro ao rejeitar personagem:", error);
+      alert("Erro ao rejeitar.");
+
+    }
 
   };
 
+  // 🔄 LOADING
   if (loading) {
-
     return (
       <div className="min-h-screen flex items-center justify-center bg-black text-white">
         Verificando permissões...
       </div>
     );
-
   }
 
   return (
@@ -154,10 +196,10 @@ export default function AprovarPersonagens() {
             </p>
           )}
 
-          {requests.map((req, i) => (
+          {requests.map((req) => (
 
             <div
-              key={i}
+              key={req.id}
               className="bg-[#111] border border-red-900 p-6 rounded-xl shadow-[0_0_10px_rgba(255,0,0,0.15)]"
             >
 

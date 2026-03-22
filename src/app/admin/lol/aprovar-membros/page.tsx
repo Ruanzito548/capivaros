@@ -27,99 +27,150 @@ export default function AprovarMembrosLOL() {
 
     const unsub = onAuthStateChanged(auth, async (user) => {
 
-      if (!user) {
+      try {
+
+        // ❌ não logado
+        if (!user) {
+          router.push("/");
+          return;
+        }
+
+        // 🔍 buscar user atual
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+
+        if (!snap.exists()) {
+          console.warn("Usuário não encontrado");
+          router.push("/");
+          return;
+        }
+
+        const data = snap.data();
+
+        console.log("USER DATA:", data);
+
+        // ❌ sem permissão
+        if (!canApproveMembers(data.role)) {
+          console.warn("Sem permissão");
+          router.push("/");
+          return;
+        }
+
+        // ✅ carregar lista
+        await fetchUsers();
+
+        setLoading(false);
+
+      } catch (error) {
+
+        console.error("ERRO PERMISSÃO LOL:", error);
         router.push("/");
-        return;
+
       }
-
-      const snap = await getDoc(doc(db, "users", user.uid));
-
-      if (!snap.exists()) {
-        router.push("/");
-        return;
-      }
-
-      const data = snap.data();
-
-      if (!canApproveMembers(data.role)) {
-        router.push("/");
-        return;
-      }
-
-      await fetchUsers();
-      setLoading(false);
 
     });
 
     return () => unsub();
 
-  }, []);
+  }, [router]);
 
+  // 🔥 buscar usuários
   const fetchUsers = async () => {
 
-    const snap = await getDocs(collection(db, "users"));
+    try {
 
-    const list = snap.docs
-      .map((doc) => ({
-        id: doc.id,
-        ...doc.data()
-      }))
-      .filter((user: any) =>
-        user.applications?.["lol"]?.status === "pending"
-      );
+      const snap = await getDocs(collection(db, "users"));
 
-    setUsers(list);
+      const list = snap.docs
+        .map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }))
+        .filter((user: any) =>
+          user.applications?.["lol"]?.status === "pending"
+        );
+
+      setUsers(list);
+
+    } catch (error) {
+
+      console.error("Erro ao buscar usuários:", error);
+
+    }
 
   };
 
+  // ✅ aprovar
   const approveUser = async (user: any) => {
 
-    const ref = doc(db, "users", user.id);
+    try {
 
-    const updatedApplications = {
-      ...user.applications,
-      "lol": {
-        ...user.applications["lol"],
-        status: "approved"
-      }
-    };
+      const ref = doc(db, "users", user.id);
 
-    await updateDoc(ref, {
-      applications: updatedApplications
-    });
+      const updatedApplications = {
+        ...user.applications,
+        "lol": {
+          ...user.applications?.["lol"],
+          status: "approved"
+        }
+      };
 
-    fetchUsers();
+      await updateDoc(ref, {
+        applications: updatedApplications
+      });
+
+      alert("Jogador aprovado!");
+
+      fetchUsers();
+
+    } catch (error) {
+
+      console.error("Erro ao aprovar:", error);
+      alert("Erro ao aprovar jogador.");
+
+    }
 
   };
 
+  // ❌ rejeitar
   const rejectUser = async (user: any) => {
 
-    const ref = doc(db, "users", user.id);
+    try {
 
-    const updatedApplications = {
-      ...user.applications,
-      "lol": {
-        ...user.applications["lol"],
-        status: "rejected"
-      }
-    };
+      const ref = doc(db, "users", user.id);
 
-    await updateDoc(ref, {
-      applications: updatedApplications
-    });
+      const updatedApplications = {
+        ...user.applications,
+        "lol": {
+          ...user.applications?.["lol"],
+          status: "rejected"
+        }
+      };
 
-    fetchUsers();
+      await updateDoc(ref, {
+        applications: updatedApplications
+      });
+
+      alert("Jogador rejeitado.");
+
+      fetchUsers();
+
+    } catch (error) {
+
+      console.error("Erro ao rejeitar:", error);
+      alert("Erro ao rejeitar.");
+
+    }
 
   };
 
+  // 🔄 loading
   if (loading) {
-
     return (
       <div className="min-h-screen flex items-center justify-center bg-black text-white">
         Verificando permissões...
       </div>
     );
-
   }
 
   return (
@@ -135,11 +186,9 @@ export default function AprovarMembrosLOL() {
         <div className="space-y-6">
 
           {users.length === 0 && (
-
             <p className="text-gray-400">
               Nenhuma aplicação pendente.
             </p>
-
           )}
 
           {users.map((user) => {
@@ -177,7 +226,6 @@ export default function AprovarMembrosLOL() {
                 <div className="flex gap-4 flex-wrap">
 
                   {opggLink && (
-
                     <a
                       href={opggLink}
                       target="_blank"
@@ -185,7 +233,6 @@ export default function AprovarMembrosLOL() {
                     >
                       Ver OP.GG
                     </a>
-
                   )}
 
                   <button
