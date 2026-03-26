@@ -27,24 +27,6 @@ export default function Footer() {
             <img src="/discord.svg" alt="Discord" className="w-7 h-7" />
           </a>
 
-          <a
-            href="https://youtube.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-14 h-14 flex items-center justify-center bg-[#141414] border border-red-900 rounded-full hover:bg-red-600 hover:scale-110 transition duration-300 shadow-[0_0_12px_rgba(255,0,0,0.3)]"
-          >
-            <img src="/youtube.svg" alt="YouTube" className="w-7 h-7" />
-          </a>
-
-          <a
-            href="https://w.app/bruzv1"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-14 h-14 flex items-center justify-center bg-[#141414] border border-red-900 rounded-full hover:bg-red-600 hover:scale-110 transition duration-300 shadow-[0_0_12px_rgba(255,0,0,0.3)]"
-          >
-            <img src="/whatsapp.svg" alt="WhatsApp" className="w-7 h-7" />
-          </a>
-
         </div>
 
         {/* DIREITA */}
