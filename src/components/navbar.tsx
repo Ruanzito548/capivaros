@@ -123,7 +123,7 @@ export default function Navbar() {
           </Link>
 
           <a
-            href="https://discord.gg/mTGxfJv9TR"
+            href="https://discord.gg/wYGHbaRsJS"
             target="_blank"
             onClick={() => setMenuOpen(false)}
           >
