@@ -175,13 +175,23 @@ export default function EditProfile() {
             Foto de Perfil
           </label>
           {photoURL && (
-            <Image
-              src={photoURL}
-              alt="Preview da foto de perfil"
-              width={96}
-              height={96}
-              className="mb-4 h-24 w-24 rounded-full border border-red-800 object-cover"
-            />
+            <div className="mb-4 flex items-center gap-4">
+              <Image
+                src={photoURL}
+                alt="Preview da foto de perfil"
+                width={96}
+                height={96}
+                className="h-24 w-24 rounded-full border border-red-800 object-cover"
+              />
+
+              <button
+                type="button"
+                onClick={() => setPhotoURL("")}
+                className="rounded-lg border border-red-800 px-4 py-2 text-sm text-red-300 transition hover:border-red-600 hover:text-white"
+              >
+                Remover foto
+              </button>
+            </div>
           )}
           <label className="mb-3 flex cursor-pointer items-center justify-center rounded-lg border border-red-800 bg-[#1c1c1c] px-4 py-3 text-sm text-gray-300 transition hover:border-red-600 hover:text-white">
             {uploadingPhoto ? "Enviando foto..." : "Escolher foto de perfil"}
@@ -192,13 +202,9 @@ export default function EditProfile() {
               className="hidden"
             />
           </label>
-          <input
-            type="text"
-            value={photoURL}
-            onChange={(e) => setPhotoURL(e.target.value)}
-            placeholder="Ou cole a URL da foto"
-            className="w-full p-3 bg-[#1c1c1c] border border-red-900 rounded-lg focus:outline-none focus:border-red-600"
-          />
+          <p className="text-sm text-gray-500">
+            A imagem enviada sera usada como sua foto de perfil.
+          </p>
         </div>
 
         <div className="mb-8">
@@ -206,13 +212,23 @@ export default function EditProfile() {
             Foto de Capa
           </label>
           {coverURL && (
-            <Image
-              src={coverURL}
-              alt="Preview da foto de capa"
-              width={1200}
-              height={256}
-              className="mb-4 h-32 w-full rounded-xl border border-red-800 object-cover"
-            />
+            <div className="mb-4">
+              <Image
+                src={coverURL}
+                alt="Preview da foto de capa"
+                width={1200}
+                height={256}
+                className="mb-4 h-32 w-full rounded-xl border border-red-800 object-cover"
+              />
+
+              <button
+                type="button"
+                onClick={() => setCoverURL("")}
+                className="rounded-lg border border-red-800 px-4 py-2 text-sm text-red-300 transition hover:border-red-600 hover:text-white"
+              >
+                Remover capa
+              </button>
+            </div>
           )}
           <label className="mb-3 flex cursor-pointer items-center justify-center rounded-lg border border-red-800 bg-[#1c1c1c] px-4 py-3 text-sm text-gray-300 transition hover:border-red-600 hover:text-white">
             {uploadingCover ? "Enviando capa..." : "Escolher foto de capa"}
@@ -223,13 +239,9 @@ export default function EditProfile() {
               className="hidden"
             />
           </label>
-          <input
-            type="text"
-            value={coverURL}
-            onChange={(e) => setCoverURL(e.target.value)}
-            placeholder="Ou cole a URL da capa"
-            className="w-full p-3 bg-[#1c1c1c] border border-red-900 rounded-lg focus:outline-none focus:border-red-600"
-          />
+          <p className="text-sm text-gray-500">
+            A capa aparece no topo do seu perfil dentro do site.
+          </p>
         </div>
 
         <div className="flex justify-between">
