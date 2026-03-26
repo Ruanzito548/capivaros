@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { db, auth } from "@/lib/firebase";
 import {
-  collection,
-  getDocs,
   doc,
   getDoc,
-  query,
-  where,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -28,25 +24,33 @@ export default function AprovarPersonagens() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  async function fetchRequests() {
+  const fetchRequests = useCallback(async () => {
     try {
-      const q = query(
-        collection(db, "characterRequests"),
-        where("status", "==", "pending")
-      );
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        router.push("/");
+        return;
+      }
 
-      const snap = await getDocs(q);
+      const token = await currentUser.getIdToken();
+      const response = await fetch("/api/admin/wow-tbc/character-requests", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      const list = snap.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...(docSnap.data() as Omit<CharacterRequest, "id">),
-      }));
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Erro ao buscar requests.");
+      }
+
+      const list = (await response.json()) as CharacterRequest[];
 
       setRequests(list);
     } catch (error) {
       console.error("Erro ao buscar requests:", error);
     }
-  }
+  }, [router]);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -80,7 +84,7 @@ export default function AprovarPersonagens() {
     });
 
     return () => unsub();
-  }, [router]);
+  }, [fetchRequests, router]);
 
   const approveCharacter = async (req: CharacterRequest) => {
     try {
