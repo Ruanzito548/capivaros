@@ -113,22 +113,22 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const duplicateRequest = requestsSnapshot.docs.find((requestDoc) => {
+    const duplicateApprovedRequest = requestsSnapshot.docs.find((requestDoc) => {
       if (requestDoc.id === id) {
         return false;
       }
 
       const data = requestDoc.data();
       return (
-        ["pending", "approved"].includes(data.status) &&
+        data.status === "approved" &&
         typeof data.name === "string" &&
         normalizeCharacterName(data.name) === normalizedName
       );
     });
 
-    if (duplicateRequest) {
+    if (duplicateApprovedRequest) {
       return NextResponse.json(
-        { error: "Character already linked or pending in another request" },
+        { error: "Character already approved in another request" },
         { status: 409 }
       );
     }
@@ -171,9 +171,29 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       server: requestData.server,
     });
 
+    const duplicatePendingUpdates = requestsSnapshot.docs
+      .filter((requestDoc) => {
+        if (requestDoc.id === id) {
+          return false;
+        }
+
+        const data = requestDoc.data();
+        return (
+          data.status === "pending" &&
+          typeof data.name === "string" &&
+          normalizeCharacterName(data.name) === normalizedName
+        );
+      })
+      .map((requestDoc) =>
+        requestDoc.ref.update({
+          status: "duplicate",
+        })
+      );
+
     await Promise.all([
       requestRef.update({ status: "approved" }),
       targetUserRef.update({ characters }),
+      ...duplicatePendingUpdates,
     ]);
 
     return NextResponse.json({ success: true });

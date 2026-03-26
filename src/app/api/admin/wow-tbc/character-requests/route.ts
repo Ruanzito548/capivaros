@@ -41,6 +41,16 @@ function hasCharacterOnUser(
   });
 }
 
+function getCreatedAtMillis(data: FirebaseFirestore.DocumentData) {
+  const createdAt = data?.createdAt;
+
+  if (typeof createdAt?.toMillis === "function") {
+    return createdAt.toMillis();
+  }
+
+  return 0;
+}
+
 export async function GET(request: NextRequest) {
   const decodedToken = await getAuthenticatedUser(request);
 
@@ -111,10 +121,44 @@ export async function GET(request: NextRequest) {
       .where("status", "==", "pending")
       .get();
 
-    const requests = pendingRequestsSnap.docs.map((requestDoc) => ({
-      id: requestDoc.id,
-      ...requestDoc.data(),
-    }));
+    const pendingDocs = [...pendingRequestsSnap.docs].sort((a, b) => {
+      return getCreatedAtMillis(a.data()) - getCreatedAtMillis(b.data());
+    });
+
+    const seenNames = new Set<string>();
+    const duplicateUpdates: Promise<FirebaseFirestore.WriteResult>[] = [];
+    const requests: Array<{ id: string; [key: string]: unknown }> = [];
+
+    for (const requestDoc of pendingDocs) {
+      const data = requestDoc.data();
+      const normalizedName =
+        typeof data.name === "string"
+          ? normalizeCharacterName(data.name)
+          : "";
+
+      if (!normalizedName) {
+        continue;
+      }
+
+      if (seenNames.has(normalizedName)) {
+        duplicateUpdates.push(
+          requestDoc.ref.update({
+            status: "duplicate",
+          })
+        );
+        continue;
+      }
+
+      seenNames.add(normalizedName);
+      requests.push({
+        id: requestDoc.id,
+        ...data,
+      });
+    }
+
+    if (duplicateUpdates.length > 0) {
+      await Promise.all(duplicateUpdates);
+    }
 
     return NextResponse.json(requests);
   } catch (error: unknown) {
