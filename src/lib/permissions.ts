@@ -46,6 +46,10 @@ export const canCreateNews = (role: string | null) => {
   return isFounder(role) || isOfficerTBC(role) || isStreamer(role);
 };
 
+export const canModerateComments = (role: string | null) => {
+  return isFounder(role) || isOfficerTBC(role);
+};
+
 export const canComment = (role: string | null) => {
   const normalizedRole = normalizeRole(role);
 

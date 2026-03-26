@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Timestamp } from "firebase-admin/firestore";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { canModerateComments } from "@/lib/permissions";
 
 export const runtime = "nodejs";
 
@@ -158,11 +159,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     const comment = commentSnapshot.data();
-    const role = userSnapshot.data()?.role;
-    const isAdmin = role === "admin";
+    const role = (userSnapshot.data()?.role as string | null) ?? null;
+    const canDeleteAnyComment = canModerateComments(role);
     const isAuthor = comment?.userId === decodedToken.uid;
 
-    if (!isAdmin && !isAuthor) {
+    if (!canDeleteAnyComment && !isAuthor) {
       return NextResponse.json(
         { error: "Forbidden" },
         { status: 403 }

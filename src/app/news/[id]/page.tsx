@@ -12,6 +12,7 @@ import {
 
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { canModerateComments } from "@/lib/permissions";
 
 interface NewsItem {
   title: string;
@@ -168,7 +169,7 @@ export default function NewsPage() {
   };
 
   const canDeleteComment = (comment: CommentItem) => {
-    if (role === "admin") return true;
+    if (canModerateComments(role)) return true;
     if (!currentUserId) return false;
 
     if (comment.userId) {
