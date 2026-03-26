@@ -200,7 +200,7 @@ export default function NewsPage() {
   if (!news) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white">
-        Carregando notÃ­cia...
+        Carregando noticia...
       </div>
     );
   }
@@ -215,7 +215,7 @@ export default function NewsPage() {
         </h1>
 
         <p className="text-gray-400 mb-10">
-          Por {news.author || "Admin"} • {formatDate(news.createdAt)}
+          Por {news.author || "Admin"} - {formatDate(news.createdAt)}
         </p>
 
         {news.image && (
@@ -243,7 +243,7 @@ export default function NewsPage() {
 
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="bg-red-600 p-5 rounded-full text-2xl">
-                    ▶
+                    Play
                   </div>
                 </div>
               </div>
@@ -273,7 +273,7 @@ export default function NewsPage() {
 
         <div className="border-t border-red-800 pt-10">
           <h2 className="text-3xl font-bold text-red-500 mb-8">
-            Comentários
+            Comentarios
           </h2>
 
           {!loadingUser && (
@@ -283,8 +283,8 @@ export default function NewsPage() {
                 onChange={(event) => setNewComment(event.target.value)}
                 placeholder={
                   currentUserId
-                    ? "Escreva um comentário..."
-                    : "Faça login para comentar"
+                    ? "Escreva um comentario..."
+                    : "Faca login para comentar"
                 }
                 disabled={!currentUserId}
                 className="w-full bg-[#111] border border-red-800 p-4 rounded resize-none mb-4 disabled:opacity-60"
@@ -292,7 +292,7 @@ export default function NewsPage() {
 
               {!currentUserId && (
                 <p className="text-gray-500 mb-4">
-                  Você precisa estar logado para comentar.
+                  Voce precisa estar logado para comentar.
                 </p>
               )}
 
@@ -327,7 +327,7 @@ export default function NewsPage() {
                     onClick={() => deleteComment(comment.id)}
                     className="mt-4 text-sm text-red-400 hover:text-red-300"
                   >
-                    Excluir comentário
+                    Excluir comentario
                   </button>
                 )}
               </div>
