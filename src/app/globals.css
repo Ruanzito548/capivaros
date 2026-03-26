@@ -20,11 +20,13 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background:
+    radial-gradient(circle at top, rgba(140, 0, 0, 0.25), transparent 35%),
+    linear-gradient(180deg, #050505 0%, #0d0d0d 45%, #160000 100%);
   font-family: 'Throne of Shadows', Arial, sans-serif;
-  background-color: #0b0b0b;
   color: #f5f5f5;
+  min-height: 100vh;
+  background-attachment: fixed;
 }
 .card-dark {
   background-color: #141414;
