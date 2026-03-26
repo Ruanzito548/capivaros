@@ -27,11 +27,7 @@ function normalizeCharacterName(value: string) {
 
 async function isCharacterTaken(name: string, userId: string) {
   const normalizedName = normalizeCharacterName(name);
-
-  const [usersSnapshot, requestsSnapshot] = await Promise.all([
-    adminDb.collection("users").get(),
-    adminDb.collection("characterRequests").get(),
-  ]);
+  const usersSnapshot = await adminDb.collection("users").get();
 
   const existsInUsers = usersSnapshot.docs.some((userDoc) => {
     const userData = userDoc.data();
@@ -60,27 +56,7 @@ async function isCharacterTaken(name: string, userId: string) {
     return true;
   }
 
-  return requestsSnapshot.docs.some((requestDoc) => {
-    const requestData = requestDoc.data();
-    const requestName = requestData.name;
-    const requestStatus = requestData.status;
-
-    if (
-      typeof requestName !== "string" ||
-      !["pending", "approved"].includes(requestStatus)
-    ) {
-      return false;
-    }
-
-    if (
-      requestData.userId === userId &&
-      normalizeCharacterName(requestName) === normalizedName
-    ) {
-      return true;
-    }
-
-    return normalizeCharacterName(requestName) === normalizedName;
-  });
+  return false;
 }
 
 export async function POST(request: NextRequest) {
