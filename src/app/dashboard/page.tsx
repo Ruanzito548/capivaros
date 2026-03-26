@@ -13,6 +13,7 @@ interface DashboardUserData {
   photoURL?: string;
   coverURL?: string;
   applications?: Record<string, Record<string, string>>;
+  characters?: Array<{ name?: string; server?: string }>;
 }
 
 interface GameCardProps {
@@ -113,6 +114,18 @@ export default function Dashboard() {
     );
   }
 
+  const wowApplicationStatus = userData.applications?.["wow-tbc"]?.status;
+  const hasApprovedCharacter =
+    Array.isArray(userData.characters) && userData.characters.length > 0;
+  const canEnterWowPanel =
+    userData.role === "member" ||
+    userData.role === "officer" ||
+    userData.role === "admin" ||
+    hasApprovedCharacter;
+  const wowCardStatus = canEnterWowPanel
+    ? "approved"
+    : wowApplicationStatus;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b0b0b] to-[#120000] text-white">
       <div className="relative h-[350px] w-full overflow-hidden">
@@ -152,7 +165,7 @@ export default function Dashboard() {
           <div className="grid md:grid-cols-2 gap-8">
             <GameCard
               title="World of Warcraft TBC"
-              status={userData.applications?.["wow-tbc"]?.status}
+              status={wowCardStatus}
               character={character}
               setCharacter={setCharacter}
               onRequest={requestJoin}
