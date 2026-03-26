@@ -1,41 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
 import {
+  addDoc,
+  collection,
+  deleteDoc,
   doc,
   getDoc,
-  collection,
-  addDoc,
   getDocs,
+  orderBy,
   query,
   where,
-  orderBy,
 } from "firebase/firestore";
 
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
+interface NewsItem {
+  title: string;
+  author?: string;
+  content: string;
+  image?: string;
+  video?: string;
+  createdAt?: { seconds?: number } | number | null;
+}
+
+interface CommentItem {
+  id: string;
+  user: string;
+  userId?: string;
+  content: string;
+}
+
 export default function NewsPage() {
-
   const { id } = useParams();
+  const router = useRouter();
 
-  const [news, setNews] = useState<any>(null);
-  const [comments, setComments] = useState<any[]>([]);
+  const [news, setNews] = useState<NewsItem | null>(null);
+  const [comments, setComments] = useState<CommentItem[]>([]);
   const [newComment, setNewComment] = useState("");
   const [role, setRole] = useState<string | null>(null);
   const [userName, setUserName] = useState("");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
-
-  // 🔥 NOVO: controle do player
   const [playVideo, setPlayVideo] = useState(false);
-
-  // -----------------------
-  // YOUTUBE HELPERS
-  // -----------------------
 
   function getYoutubeId(url: string) {
     try {
@@ -56,129 +68,151 @@ export default function NewsPage() {
   }
 
   function getYoutubeThumbnail(url: string) {
-    const id = getYoutubeId(url);
-    if (!id) return null;
-    return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    const youtubeId = getYoutubeId(url);
+    if (!youtubeId) return null;
+    return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
   }
 
   function getYoutubeEmbed(url: string) {
-    const id = getYoutubeId(url);
-    if (!id) return url;
-    return `https://www.youtube.com/embed/${id}?autoplay=1`;
+    const youtubeId = getYoutubeId(url);
+    if (!youtubeId) return url;
+    return `https://www.youtube.com/embed/${youtubeId}?autoplay=1`;
   }
 
-  // -----------------------
-
-  const formatDate = (date: any) => {
+  const formatDate = (date: NewsItem["createdAt"]) => {
     if (!date) return "";
-    const d = new Date(date.seconds ? date.seconds * 1000 : date);
-    return d.toLocaleDateString("pt-BR");
+    const timestamp =
+      typeof date === "number" ? date : (date.seconds ?? 0) * 1000;
+    return new Date(timestamp).toLocaleDateString("pt-BR");
   };
 
-  const fetchNews = async () => {
+  const fetchNews = useCallback(async () => {
     const ref = doc(db, "news", id as string);
     const snap = await getDoc(ref);
 
     if (snap.exists()) {
-      setNews(snap.data());
+      setNews(snap.data() as NewsItem);
     }
-  };
+  }, [id]);
 
-  const fetchComments = async () => {
-
-    const q = query(
+  const fetchComments = useCallback(async () => {
+    const commentsQuery = query(
       collection(db, "comments"),
       where("newsId", "==", id),
       orderBy("createdAt", "desc")
     );
 
-    const snapshot = await getDocs(q);
+    const snapshot = await getDocs(commentsQuery);
 
-    const list = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const list = snapshot.docs.map((commentDoc) => {
+      const data = commentDoc.data();
+
+      return {
+        id: commentDoc.id,
+        user: data.user as string,
+        userId: data.userId as string | undefined,
+        content: data.content as string,
+      };
+    });
 
     setComments(list);
+  }, [id]);
 
-  };
+  useEffect(() => {
+    const loadPage = async () => {
+      await Promise.all([fetchNews(), fetchComments()]);
+    };
 
-  const fetchUserData = () => {
+    void loadPage();
 
-    onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUserId(user?.uid ?? null);
 
       if (!user) {
+        setRole(null);
+        setUserName("");
         setLoadingUser(false);
         return;
       }
 
-      const ref = doc(db, "users", user.uid);
-      const snap = await getDoc(ref);
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
 
-      if (snap.exists()) {
-        const data = snap.data();
-        setRole(data.role);
-        setUserName(data.username);
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        setRole((data.role as string | null) ?? null);
+        setUserName((data.username as string) ?? "");
       }
 
       setLoadingUser(false);
-
     });
 
+    return () => unsubscribe();
+  }, [fetchComments, fetchNews]);
+
+  const redirectToLogin = () => {
+    router.push(`/login?next=/news/${id}`);
   };
 
-  useEffect(() => {
-    fetchNews();
-    fetchComments();
-    fetchUserData();
-  }, []);
-
   const sendComment = async () => {
+    const user = auth.currentUser;
+
+    if (!user) {
+      redirectToLogin();
+      return;
+    }
 
     if (!newComment.trim()) return;
-
-    const user = auth.currentUser;
-    if (!user) return;
 
     await addDoc(collection(db, "comments"), {
       newsId: id,
       user: userName,
-      content: newComment,
+      userId: user.uid,
+      content: newComment.trim(),
       createdAt: new Date(),
     });
 
     setNewComment("");
     fetchComments();
+  };
 
+  const canDeleteComment = (comment: CommentItem) => {
+    if (role === "admin") return true;
+    if (!currentUserId) return false;
+
+    if (comment.userId) {
+      return comment.userId === currentUserId;
+    }
+
+    return comment.user === userName;
+  };
+
+  const deleteComment = async (commentId: string) => {
+    await deleteDoc(doc(db, "comments", commentId));
+    fetchComments();
   };
 
   if (!news) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white">
-        Carregando notícia...
+        Carregando notÃ­cia...
       </div>
     );
   }
 
-  const thumb = getYoutubeThumbnail(news.video);
+  const thumb = news.video ? getYoutubeThumbnail(news.video) : null;
 
   return (
-
     <div className="min-h-screen bg-[#0b0b0b] text-white px-6 py-16 flex justify-center">
-
       <div className="max-w-4xl w-full">
-
-        {/* TÍTULO */}
         <h1 className="text-5xl font-bold text-red-500 mb-4">
           {news.title}
         </h1>
 
-        {/* META */}
         <p className="text-gray-400 mb-10">
           Por {news.author || "Admin"} • {formatDate(news.createdAt)}
         </p>
 
-        {/* IMAGEM */}
         {news.image && (
           <Image
             src={news.image}
@@ -189,18 +223,18 @@ export default function NewsPage() {
           />
         )}
 
-        {/* 🎬 PLAYER INTELIGENTE */}
         {news.video && thumb && (
-
           <div className="mb-12">
-
             {!playVideo ? (
-
               <div
                 className="relative cursor-pointer"
                 onClick={() => setPlayVideo(true)}
               >
-                <img src={thumb} className="rounded-xl w-full" />
+                <img
+                  src={thumb}
+                  alt={news.title}
+                  className="rounded-xl w-full"
+                />
 
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="bg-red-600 p-5 rounded-full text-2xl">
@@ -208,53 +242,54 @@ export default function NewsPage() {
                   </div>
                 </div>
               </div>
-
             ) : (
-
               <iframe
                 src={getYoutubeEmbed(news.video)}
                 className="w-full h-[450px] rounded-xl"
                 allow="autoplay; encrypted-media"
                 allowFullScreen
               />
-
             )}
 
-            {/* 🔥 fallback */}
             <a
               href={news.video}
               target="_blank"
+              rel="noopener noreferrer"
               className="block mt-3 text-red-400 underline"
             >
               Assistir no YouTube
             </a>
-
           </div>
-
         )}
 
-        {/* CONTEÚDO */}
         <div className="text-gray-300 text-lg leading-relaxed whitespace-pre-line mb-16">
           {news.content}
         </div>
 
-        {/* COMENTÁRIOS */}
         <div className="border-t border-red-800 pt-10">
-
           <h2 className="text-3xl font-bold text-red-500 mb-8">
             Comentários
           </h2>
 
-          {!loadingUser && (role === "member" || role === "vip" || role === "admin") && (
-
+          {!loadingUser && (
             <div className="mb-10">
-
               <textarea
                 value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Escreva um comentário..."
-                className="w-full bg-[#111] border border-red-800 p-4 rounded resize-none mb-4"
+                onChange={(event) => setNewComment(event.target.value)}
+                placeholder={
+                  currentUserId
+                    ? "Escreva um comentário..."
+                    : "Faça login para comentar"
+                }
+                disabled={!currentUserId}
+                className="w-full bg-[#111] border border-red-800 p-4 rounded resize-none mb-4 disabled:opacity-60"
               />
+
+              {!currentUserId && (
+                <p className="text-gray-500 mb-4">
+                  Você precisa estar logado para comentar.
+                </p>
+              )}
 
               <button
                 onClick={sendComment}
@@ -262,26 +297,15 @@ export default function NewsPage() {
               >
                 Comentar
               </button>
-
             </div>
-
-          )}
-
-          {!loadingUser && role === "recruit" && (
-            <p className="text-gray-500 mb-10">
-              Apenas membros podem comentar.
-            </p>
           )}
 
           <div className="space-y-4">
-
             {comments.map((comment) => (
-
               <div
                 key={comment.id}
                 className="bg-[#111] border border-red-800 p-4 rounded"
               >
-
                 <Link
                   href={`/perfil/${comment.user}`}
                   className="text-red-400 font-semibold hover:text-red-300"
@@ -293,18 +317,19 @@ export default function NewsPage() {
                   {comment.content}
                 </p>
 
+                {canDeleteComment(comment) && (
+                  <button
+                    onClick={() => deleteComment(comment.id)}
+                    className="mt-4 text-sm text-red-400 hover:text-red-300"
+                  >
+                    Excluir comentário
+                  </button>
+                )}
               </div>
-
             ))}
-
           </div>
-
         </div>
-
       </div>
-
     </div>
-
   );
-
 }

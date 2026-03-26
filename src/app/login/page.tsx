@@ -10,10 +10,12 @@ import {
   getDoc,
   setDoc,
 } from "firebase/firestore";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function Login() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get("next");
 
   async function handleLogin() {
     try {
@@ -25,7 +27,6 @@ export default function Login() {
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
-        // Novo usuário
         await setDoc(userRef, {
           name: user.displayName,
           email: user.email,
@@ -39,13 +40,11 @@ export default function Login() {
 
       const data = userSnap.data();
 
-      // Verifica se perfil está incompleto
       if (!data.username || !data.phone) {
         router.push("/complete-profile");
       } else {
-        router.push("/dashboard");
+        router.push(nextPath || "/dashboard");
       }
-
     } catch (error) {
       console.error("Erro no login:", error);
     }
