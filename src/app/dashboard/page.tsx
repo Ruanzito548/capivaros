@@ -186,7 +186,7 @@ export default function Dashboard() {
             />
 
             {/* LOL */}
-
+            {/* Descomente quando quiser reativar a entrada de LoL no perfil.
             <GameCard
               title="League of Legends"
               status={userData.applications?.["lol"]?.status}
@@ -196,6 +196,7 @@ export default function Dashboard() {
               onEnter={() => router.push("/dashboard/lol")}
               field="riot"
             />
+            */}
 
           </div>
 
