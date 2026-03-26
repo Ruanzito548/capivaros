@@ -3,14 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  limit
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
 interface News {
   id: string;
@@ -18,7 +10,7 @@ interface News {
   content: string;
   image?: string;
   video?: string;
-  createdAt: any;
+  createdAt?: number | null;
 }
 
 export default function Home() {
@@ -26,28 +18,23 @@ export default function Home() {
   const [news, setNews] = useState<News[]>([]);
 
   useEffect(() => {
-
     const fetchNews = async () => {
+      try {
+        const response = await fetch("/api/news?limit=3");
 
-      const q = query(
-        collection(db, "news"),
-        orderBy("createdAt", "desc"),
-        limit(3)
-      );
+        if (!response.ok) {
+          throw new Error("Failed to load news");
+        }
 
-      const snapshot = await getDocs(q);
-
-      const list: News[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as any),
-      }));
-
-      setNews(list);
-
+        const list = (await response.json()) as News[];
+        setNews(list);
+      } catch (error) {
+        console.error("Erro ao buscar noticias publicas:", error);
+        setNews([]);
+      }
     };
 
     fetchNews();
-
   }, []);
 
   const destaque = news[0];
@@ -160,6 +147,7 @@ export default function Home() {
                   return thumb && (
                     <img
                       src={thumb}
+                      alt={destaque.title}
                       className="w-full h-[420px] object-cover"
                     />
                   );
@@ -209,6 +197,7 @@ export default function Home() {
                   ) : thumb ? (
                     <img
                       src={thumb}
+                      alt={n.title}
                       className="w-full h-[200px] object-cover"
                     />
                   ) : null}
