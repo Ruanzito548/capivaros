@@ -111,17 +111,6 @@ export default function AdminWOWTBC() {
             </Link>
           )}
 
-          <div className="bg-[#111] border border-red-900 rounded-xl p-8 opacity-60">
-            <div className="text-4xl mb-4">📊</div>
-
-            <h2 className="text-xl font-bold mb-2">
-              Ranking / Logs
-            </h2>
-
-            <p className="text-gray-400 text-sm">
-              Em breve: ranking de parses e desempenho da raid.
-            </p>
-          </div>
         </div>
       </div>
     </div>
