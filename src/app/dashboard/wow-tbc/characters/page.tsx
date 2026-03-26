@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { getRoleLabel } from "@/lib/permissions";
 
 interface Character {
   name: string;
@@ -243,7 +244,7 @@ export default function CharactersPage() {
             </h2>
 
             <span className="mt-4 px-8 py-2 rounded-full text-sm bg-zinc-700">
-              {profile.role}
+              {getRoleLabel(profile.role)}
             </span>
           </div>
         </div>

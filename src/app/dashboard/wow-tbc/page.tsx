@@ -5,6 +5,7 @@ import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
+import { getRoleLabel } from "@/lib/permissions";
 
 interface WowDashboardUserData {
   username?: string;
@@ -128,7 +129,7 @@ export default function DashboardWOWTBC() {
           </h1>
 
           <span className="mt-4 px-8 py-2 rounded-full text-sm bg-zinc-700">
-            {userData.role}
+            {getRoleLabel(userData.role)}
           </span>
         </div>
 

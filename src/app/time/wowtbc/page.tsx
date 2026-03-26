@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getRoleLabel, isFounder, isOfficerTBC } from "@/lib/permissions";
 
 interface Member {
   id: string;
@@ -10,7 +11,7 @@ interface Member {
   photoURL?: string;
 }
 
-const ADMIN_ROLES = new Set(["admin", "fundador", "officer"]);
+const ADMIN_ROLES = new Set(["admin", "fundador", "officer", "officer tbc"]);
 
 export default function WowTbcPage() {
   const [members, setMembers] = useState<Member[]>([]);
@@ -138,16 +139,16 @@ function MemberCard({
 
       <span
         className={`inline-block px-4 py-1 rounded-full text-sm font-semibold ${
-          role === "fundador"
+          isFounder(member.role)
             ? "bg-red-600"
-            : role === "officer"
+            : isOfficerTBC(member.role)
             ? "bg-yellow-500 text-black"
             : role === "admin"
             ? "bg-red-800"
             : "bg-zinc-700"
         }`}
       >
-        {member.role}
+        {getRoleLabel(member.role)}
       </span>
     </div>
   );

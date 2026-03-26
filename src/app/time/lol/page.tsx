@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getRoleLabel, isFounder, isOfficerTBC } from "@/lib/permissions";
 
 interface Member {
   id: string;
@@ -54,8 +55,6 @@ export default function LolPage() {
               ? member.photoURL
               : "/capilogo.png";
 
-          const role = member.role.toLowerCase();
-
           return (
             <div
               key={member.id}
@@ -79,14 +78,14 @@ export default function LolPage() {
 
               <span
                 className={`inline-block px-4 py-1 rounded-full text-sm font-semibold ${
-                  role === "fundador"
+                  isFounder(member.role)
                     ? "bg-blue-600"
-                    : role === "officer"
+                    : isOfficerTBC(member.role)
                     ? "bg-yellow-500 text-black"
                     : "bg-zinc-700"
                 }`}
               >
-                {member.role}
+                {getRoleLabel(member.role)}
               </span>
             </div>
           );

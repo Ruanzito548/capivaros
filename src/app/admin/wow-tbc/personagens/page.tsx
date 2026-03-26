@@ -5,7 +5,7 @@ import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { canApproveCharacters } from "@/lib/permissions";
+import { canManageRoles } from "@/lib/permissions";
 
 interface LinkedCharacter {
   userId: string;
@@ -62,7 +62,7 @@ export default function AdminCharactersPage() {
 
         const data = snap.data();
 
-        if (!canApproveCharacters(data.role)) {
+        if (!canManageRoles(data.role)) {
           router.push("/");
           return;
         }

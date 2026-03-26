@@ -5,6 +5,7 @@ import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { getRoleLabel, isFounder, isOfficerTBC } from "@/lib/permissions";
 
 interface DashboardUserData {
   username?: string;
@@ -119,8 +120,9 @@ export default function Dashboard() {
     Array.isArray(userData.characters) && userData.characters.length > 0;
   const canEnterWowPanel =
     userData.role === "member" ||
-    userData.role === "officer" ||
-    userData.role === "admin" ||
+    userData.role === "vip" ||
+    isOfficerTBC(userData.role ?? null) ||
+    isFounder(userData.role ?? null) ||
     hasApprovedCharacter;
   const wowCardStatus = canEnterWowPanel
     ? "approved"
@@ -153,7 +155,7 @@ export default function Dashboard() {
           </h1>
 
           <span className="mt-4 px-8 py-2 rounded-full text-sm bg-zinc-700">
-            {userData.role}
+            {getRoleLabel(userData.role)}
           </span>
         </div>
 
