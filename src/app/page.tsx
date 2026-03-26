@@ -68,9 +68,7 @@ export default function Home() {
 
   return (
 
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(120,0,0,0.28),transparent_45%),linear-gradient(180deg,#050505_0%,#0b0b0b_45%,#120000_100%)]">
-
-      <div className="absolute inset-0 bg-black/70" />
+    <div className="relative min-h-screen overflow-hidden bg-transparent">
 
       <div className="relative z-10 px-6 py-20 flex flex-col items-center min-h-screen text-white">
 
