@@ -14,6 +14,18 @@ export default function CompleteProfile() {
 
   const router = useRouter();
 
+  const handleUsernameChange = (value: string) => {
+    setUsername(value.replace(/[^a-zA-Z0-9]/g, ""));
+  };
+
+  const handleDiscordChange = (value: string) => {
+    setDiscord(value.replace(/\s+/g, ""));
+  };
+
+  const handlePhoneChange = (value: string) => {
+    setPhone(value.replace(/\s+/g, ""));
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -102,8 +114,9 @@ export default function CompleteProfile() {
               type="text"
               placeholder="Nome de usuario no site"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => handleUsernameChange(e.target.value)}
               className="w-full mb-4 p-3 bg-[#1c1c1c] border border-red-900 rounded-lg"
+              pattern="[A-Za-z0-9]+"
               required
             />
 
@@ -111,7 +124,7 @@ export default function CompleteProfile() {
               type="text"
               placeholder="Discord (ex: Ruanzito#1234)"
               value={discord}
-              onChange={(e) => setDiscord(e.target.value)}
+              onChange={(e) => handleDiscordChange(e.target.value)}
               className="w-full mb-4 p-3 bg-[#1c1c1c] border border-red-900 rounded-lg"
               required
             />
@@ -120,7 +133,7 @@ export default function CompleteProfile() {
               type="tel"
               placeholder="Telefone (opcional)"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => handlePhoneChange(e.target.value)}
               className="w-full mb-6 p-3 bg-[#1c1c1c] border border-red-900 rounded-lg"
             />
 

@@ -24,6 +24,14 @@ function normalizeUsername(value: string) {
   return value.trim().toLowerCase();
 }
 
+function isUsernameValid(value: string) {
+  return /^[a-zA-Z0-9]+$/.test(value);
+}
+
+function hasWhitespace(value: string) {
+  return /\s/.test(value);
+}
+
 async function isUsernameTaken(username: string, currentUserId: string) {
   const normalizedUsername = normalizeUsername(username);
   const snapshot = await adminDb.collection("users").get();
@@ -60,6 +68,20 @@ export async function POST(request: NextRequest) {
     if (!username || !discord) {
       return NextResponse.json(
         { error: "Username and discord are required" },
+        { status: 400 }
+      );
+    }
+
+    if (!isUsernameValid(username)) {
+      return NextResponse.json(
+        { error: "Username must use only letters and numbers" },
+        { status: 400 }
+      );
+    }
+
+    if (hasWhitespace(discord) || hasWhitespace(phone)) {
+      return NextResponse.json(
+        { error: "Discord and phone cannot contain spaces" },
         { status: 400 }
       );
     }
@@ -115,6 +137,13 @@ export async function PATCH(request: NextRequest) {
     if (!username) {
       return NextResponse.json(
         { error: "Username is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!isUsernameValid(username)) {
+      return NextResponse.json(
+        { error: "Username must use only letters and numbers" },
         { status: 400 }
       );
     }
