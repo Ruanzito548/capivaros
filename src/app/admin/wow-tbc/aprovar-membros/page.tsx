@@ -3,14 +3,10 @@
 import { useEffect, useState } from "react";
 import { db, auth } from "@/lib/firebase";
 import {
-  addDoc,
   collection,
   getDocs,
-  updateDoc,
   doc,
   getDoc,
-  query,
-  where,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -88,46 +84,28 @@ export default function AprovarMembrosWOWTBC() {
 
   const approveUser = async (user: PendingUser) => {
     try {
-      const ref = doc(db, "users", user.id);
-      const mainCharacter = user.applications?.["wow-tbc"]?.mainCharacter?.trim();
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        router.push("/");
+        return;
+      }
 
-      const updatedApplications = {
-        ...user.applications,
-        "wow-tbc": {
-          ...user.applications?.["wow-tbc"],
-          status: "approved",
+      const token = await currentUser.getIdToken();
+      const response = await fetch(`/api/admin/wow-tbc/members/${user.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      };
-
-      await updateDoc(ref, {
-        role: "member",
-        applications: updatedApplications,
+        body: JSON.stringify({
+          action: "approve",
+        }),
       });
 
-      if (mainCharacter) {
-        const existingRequestQuery = query(
-          collection(db, "characterRequests"),
-          where("name", "==", mainCharacter)
-        );
-
-        const existingRequestSnap = await getDocs(existingRequestQuery);
-
-        const hasOpenOrApprovedRequest = existingRequestSnap.docs.some((docSnap) => {
-          const data = docSnap.data();
-          return data.status === "pending" || data.status === "approved";
-        });
-
-        if (!hasOpenOrApprovedRequest) {
-          await addDoc(collection(db, "characterRequests"), {
-            username: user.username,
-            userId: user.id,
-            name: mainCharacter,
-            server: "nightslayer",
-            region: "US",
-            status: "pending",
-            createdAt: new Date(),
-          });
-        }
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        alert(data?.error || "Erro ao aprovar usuario.");
+        return;
       }
 
       alert("Membro aprovado com sucesso.");
@@ -140,19 +118,29 @@ export default function AprovarMembrosWOWTBC() {
 
   const rejectUser = async (user: PendingUser) => {
     try {
-      const ref = doc(db, "users", user.id);
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        router.push("/");
+        return;
+      }
 
-      const updatedApplications = {
-        ...user.applications,
-        "wow-tbc": {
-          ...user.applications?.["wow-tbc"],
-          status: "rejected",
+      const token = await currentUser.getIdToken();
+      const response = await fetch(`/api/admin/wow-tbc/members/${user.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      };
-
-      await updateDoc(ref, {
-        applications: updatedApplications,
+        body: JSON.stringify({
+          action: "reject",
+        }),
       });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        alert(data?.error || "Erro ao rejeitar.");
+        return;
+      }
 
       alert("Membro rejeitado.");
       await fetchUsers();
