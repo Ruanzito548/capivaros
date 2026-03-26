@@ -34,14 +34,14 @@ export default function LolPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0b0b0b] text-red-500 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent text-red-500 flex items-center justify-center">
         Carregando membros...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0b0b] text-white py-20 px-6">
+    <div className="min-h-screen bg-transparent text-white py-20 px-6">
 
       <h1 className="text-5xl font-bold text-center text-red-500 mb-16 drop-shadow-[0_0_15px_rgba(255,0,0,0.8)]">
         League of Legends

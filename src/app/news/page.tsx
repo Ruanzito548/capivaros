@@ -65,7 +65,7 @@ export default function NewsList() {
 
   return (
 
-    <div className="min-h-screen bg-[#0b0b0b] text-white px-6 py-16 flex flex-col items-center">
+    <div className="min-h-screen bg-transparent text-white px-6 py-16 flex flex-col items-center">
 
       <h1 className="text-5xl font-bold text-red-500 mb-16">
         Notícias da Guilda

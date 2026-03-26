@@ -90,14 +90,14 @@ export default function CompleteProfile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+      <div className="min-h-screen flex items-center justify-center bg-transparent text-white">
         Carregando...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0b0b] text-white flex items-center justify-center px-6">
+    <div className="min-h-screen bg-transparent text-white flex items-center justify-center px-6">
       <div className="w-full max-w-md">
         <div className="bg-[#111] border border-red-800 rounded-2xl p-10 shadow-[0_0_40px_rgba(255,0,0,0.25)]">
           <h1 className="text-3xl font-bold text-red-500 text-center mb-6 drop-shadow-[0_0_10px_rgba(255,0,0,0.8)]">

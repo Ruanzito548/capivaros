@@ -231,12 +231,12 @@ export default function NoticiasAdmin() {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-black text-white">Carregando...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-transparent text-white">Carregando...</div>;
   }
 
   return (
 
-    <div className="min-h-screen bg-[#0b0b0b] text-white p-12 flex justify-center">
+    <div className="min-h-screen bg-transparent text-white p-12 flex justify-center">
 
       <div className="max-w-5xl w-full">
 

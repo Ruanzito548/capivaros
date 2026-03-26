@@ -57,7 +57,7 @@ export default function RaidRankingPage() {
   }, [zone]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0b0b0b] to-[#120000] text-white py-20 px-6">
+    <div className="min-h-screen bg-transparent text-white py-20 px-6">
       <h1 className="text-5xl font-bold text-center text-red-500 mb-4 drop-shadow-[0_0_15px_rgba(255,0,0,0.8)]">
         {raidName}
       </h1>

@@ -61,7 +61,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(140,0,0,0.25),transparent_35%),linear-gradient(180deg,#050505_0%,#0d0d0d_45%,#160000_100%)] text-white px-6 py-16">
+    <div className="min-h-screen bg-transparent text-white px-6 py-16">
       <div className="mx-auto flex min-h-[80vh] max-w-6xl items-center justify-center">
         <div className="grid w-full overflow-hidden rounded-3xl border border-red-900/70 bg-black/40 shadow-[0_0_45px_rgba(255,0,0,0.12)] backdrop-blur md:grid-cols-[1.1fr_0.9fr]">
           <div className="border-b border-red-900/50 p-10 md:border-b-0 md:border-r">

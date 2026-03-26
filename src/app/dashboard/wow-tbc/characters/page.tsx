@@ -217,7 +217,7 @@ export default function CharactersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0b0b] text-white flex flex-col items-center py-16">
+    <div className="min-h-screen bg-transparent text-white flex flex-col items-center py-16">
       {profile && (
         <div className="w-full relative -mt-28 mb-12">
           <div className="relative h-[360px] w-full overflow-hidden">

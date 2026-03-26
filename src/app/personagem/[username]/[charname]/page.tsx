@@ -43,7 +43,7 @@ export default function CharacterProfile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0b0b0b] text-red-500 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent text-red-500 flex items-center justify-center">
         Carregando personagem...
       </div>
     );
@@ -51,7 +51,7 @@ export default function CharacterProfile() {
 
   if (!character) {
     return (
-      <div className="min-h-screen bg-[#0b0b0b] text-red-500 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent text-red-500 flex items-center justify-center">
         Personagem não encontrado.
       </div>
     );
@@ -60,7 +60,7 @@ export default function CharacterProfile() {
   const armoryUrl = `https://classicwowarmory.com/character/${region}/${server}/${character.name.toLowerCase()}?game_version=classic`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0b0b0b] to-[#120000] text-white py-20 px-6">
+    <div className="min-h-screen bg-transparent text-white py-20 px-6">
 
       <div className="max-w-6xl mx-auto">
 

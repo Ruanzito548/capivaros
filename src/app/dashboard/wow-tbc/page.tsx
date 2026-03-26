@@ -96,14 +96,14 @@ export default function DashboardWOWTBC() {
 
   if (loading || !userData) {
     return (
-      <div className="min-h-screen bg-black text-red-500 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent text-red-500 flex items-center justify-center">
         Carregando...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0b0b0b] to-[#120000] text-white">
+    <div className="min-h-screen bg-transparent text-white">
       <div className="relative h-[350px] w-full overflow-hidden">
         <img
           src={userData.coverURL || "/capa.jpg"}

@@ -1,6 +1,6 @@
 export default function SucessoPage() {
   return (
-    <div className="min-h-screen bg-[#0b0b0b] text-white flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-transparent text-white flex flex-col items-center justify-center px-6">
       
       <h1 className="text-5xl font-bold text-green-500 mb-6 drop-shadow-[0_0_15px_rgba(0,255,0,0.7)]">
         ✅ Pagamento Aprovado!

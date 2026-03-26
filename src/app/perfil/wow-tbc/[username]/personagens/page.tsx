@@ -102,7 +102,7 @@ export default function PersonagensPerfil() {
   if (loading) {
 
     return (
-      <div className="min-h-screen bg-[#0b0b0b] text-red-500 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent text-red-500 flex items-center justify-center">
         Carregando personagens...
       </div>
     );
@@ -112,7 +112,7 @@ export default function PersonagensPerfil() {
   if (!userData) {
 
     return (
-      <div className="min-h-screen bg-[#0b0b0b] text-white flex items-center justify-center">
+      <div className="min-h-screen bg-transparent text-white flex items-center justify-center">
         Usuário não encontrado
       </div>
     );
@@ -121,7 +121,7 @@ export default function PersonagensPerfil() {
 
   return (
 
-    <div className="min-h-screen bg-gradient-to-b from-[#0b0b0b] to-[#120000] text-white">
+    <div className="min-h-screen bg-transparent text-white">
 
       {/* CAPA */}
 

@@ -20,7 +20,7 @@ export default function TimePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0b0b0b] text-white py-20 px-6">
+    <div className="min-h-screen bg-transparent text-white py-20 px-6">
 
       {/* Título */}
       <h1 className="text-5xl font-bold text-center text-red-500 mb-16 drop-shadow-[0_0_15px_rgba(255,0,0,0.8)]">

@@ -126,14 +126,14 @@ export default function AdminCharactersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+      <div className="min-h-screen flex items-center justify-center bg-transparent text-white">
         Carregando personagens...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0b0b] text-white p-12 flex justify-center">
+    <div className="min-h-screen bg-transparent text-white p-12 flex justify-center">
       <div className="max-w-6xl w-full">
         <div className="mb-10">
           <h1 className="text-4xl font-bold text-red-500">

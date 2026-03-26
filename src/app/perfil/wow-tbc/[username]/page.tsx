@@ -40,7 +40,7 @@ export default function PerfilWOW() {
   if (loading) {
 
     return (
-      <div className="min-h-screen bg-black text-red-500 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent text-red-500 flex items-center justify-center">
         Carregando perfil...
       </div>
     );
@@ -50,7 +50,7 @@ export default function PerfilWOW() {
   if (!userData) {
 
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-transparent text-white flex items-center justify-center">
         Usuário não encontrado
       </div>
     );
@@ -63,7 +63,7 @@ export default function PerfilWOW() {
 
   return (
 
-    <div className="min-h-screen bg-gradient-to-b from-[#0b0b0b] to-[#120000] text-white">
+    <div className="min-h-screen bg-transparent text-white">
 
       {/* CAPA */}
 

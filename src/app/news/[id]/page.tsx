@@ -208,7 +208,7 @@ export default function NewsPage() {
   const thumb = news.video ? getYoutubeThumbnail(news.video) : null;
 
   return (
-    <div className="min-h-screen bg-[#0b0b0b] text-white px-6 py-16 flex justify-center">
+    <div className="min-h-screen bg-transparent text-white px-6 py-16 flex justify-center">
       <div className="max-w-4xl w-full">
         <h1 className="text-5xl font-bold text-red-500 mb-4">
           {news.title}

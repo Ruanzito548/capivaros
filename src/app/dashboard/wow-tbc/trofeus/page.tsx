@@ -71,7 +71,7 @@ export default function TrofeusPage() {
   const progress = (unlocked / trophies.length) * 100
 
   return (
-    <div className="min-h-screen bg-black text-white p-10">
+    <div className="min-h-screen bg-transparent text-white p-10">
 
       {/* header */}
       <div className="mb-10">
