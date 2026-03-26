@@ -147,6 +147,23 @@ export default function AdminPage() {
               </p>
             </Link>
           )}
+
+          {canManageRoles(role) && (
+            <Link
+              href="/admin/membros"
+              className="group bg-[#111] border border-red-800 rounded-xl p-8 hover:border-red-500 hover:shadow-[0_0_30px_rgba(255,0,0,0.5)] transition"
+            >
+              <div className="text-4xl mb-4">👤</div>
+
+              <h2 className="text-xl font-bold mb-2 group-hover:text-red-400">
+                Todos os Membros
+              </h2>
+
+              <p className="text-gray-400 text-sm">
+                Ver todas as contas do Firebase e excluir quando necessario.
+              </p>
+            </Link>
+          )}
         </div>
       </div>
     </div>
