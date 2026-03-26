@@ -6,15 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 
 import {
-  addDoc,
-  collection,
-  deleteDoc,
   doc,
   getDoc,
-  getDocs,
-  orderBy,
-  query,
-  where,
 } from "firebase/firestore";
 
 import { auth, db } from "@/lib/firebase";
@@ -87,34 +80,26 @@ export default function NewsPage() {
   };
 
   const fetchNews = useCallback(async () => {
-    const ref = doc(db, "news", id as string);
-    const snap = await getDoc(ref);
+    const response = await fetch(`/api/news/${id}`);
 
-    if (snap.exists()) {
-      setNews(snap.data() as NewsItem);
+    if (!response.ok) {
+      setNews(null);
+      return;
     }
+
+    const data = (await response.json()) as NewsItem;
+    setNews(data);
   }, [id]);
 
   const fetchComments = useCallback(async () => {
-    const commentsQuery = query(
-      collection(db, "comments"),
-      where("newsId", "==", id),
-      orderBy("createdAt", "desc")
-    );
+    const response = await fetch(`/api/comments?newsId=${id}`);
 
-    const snapshot = await getDocs(commentsQuery);
+    if (!response.ok) {
+      setComments([]);
+      return;
+    }
 
-    const list = snapshot.docs.map((commentDoc) => {
-      const data = commentDoc.data();
-
-      return {
-        id: commentDoc.id,
-        user: data.user as string,
-        userId: data.userId as string | undefined,
-        content: data.content as string,
-      };
-    });
-
+    const list = (await response.json()) as CommentItem[];
     setComments(list);
   }, [id]);
 
@@ -164,16 +149,22 @@ export default function NewsPage() {
 
     if (!newComment.trim()) return;
 
-    await addDoc(collection(db, "comments"), {
-      newsId: id,
-      user: userName,
-      userId: user.uid,
-      content: newComment.trim(),
-      createdAt: new Date(),
+    const token = await user.getIdToken();
+
+    await fetch("/api/comments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        newsId: id,
+        content: newComment.trim(),
+      }),
     });
 
     setNewComment("");
-    fetchComments();
+    await fetchComments();
   };
 
   const canDeleteComment = (comment: CommentItem) => {
@@ -188,8 +179,22 @@ export default function NewsPage() {
   };
 
   const deleteComment = async (commentId: string) => {
-    await deleteDoc(doc(db, "comments", commentId));
-    fetchComments();
+    const user = auth.currentUser;
+    if (!user) {
+      redirectToLogin();
+      return;
+    }
+
+    const token = await user.getIdToken();
+
+    await fetch(`/api/comments?id=${commentId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    await fetchComments();
   };
 
   if (!news) {
