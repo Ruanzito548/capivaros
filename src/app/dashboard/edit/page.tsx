@@ -1,13 +1,18 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
-import { auth, db } from "@/lib/firebase";
+import { auth, db, storage } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
 export default function EditProfile() {
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [username, setUsername] = useState("");
   const [photoURL, setPhotoURL] = useState("");
   const [coverURL, setCoverURL] = useState("");
@@ -35,31 +40,107 @@ export default function EditProfile() {
     return () => unsub();
   }, [router]);
 
-  const handleSave = async () => {
-    if (!auth.currentUser) return;
+  const uploadImage = async (
+    file: File,
+    folder: "profile-photos" | "cover-photos"
+  ) => {
+    const user = auth.currentUser;
 
-    const token = await auth.currentUser.getIdToken();
-    const response = await fetch("/api/profile", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        username,
-        photoURL,
-        coverURL,
-      }),
-    });
+    if (!user) {
+      throw new Error("Usuario nao autenticado.");
+    }
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => null);
-      alert(data?.error || "Erro ao atualizar perfil.");
+    if (!file.type.startsWith("image/")) {
+      throw new Error("Escolha um arquivo de imagem valido.");
+    }
+
+    const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const fileRef = ref(
+      storage,
+      `${folder}/${user.uid}-${Date.now()}.${extension}`
+    );
+
+    await uploadBytes(fileRef, file);
+    return getDownloadURL(fileRef);
+  };
+
+  const handlePhotoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
       return;
     }
 
-    alert("Perfil atualizado com sucesso!");
-    router.push("/dashboard");
+    try {
+      setUploadingPhoto(true);
+      const url = await uploadImage(file, "profile-photos");
+      setPhotoURL(url);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Erro ao enviar a foto.";
+      alert(message);
+    } finally {
+      setUploadingPhoto(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleCoverUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      setUploadingCover(true);
+      const url = await uploadImage(file, "cover-photos");
+      setCoverURL(url);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Erro ao enviar a capa.";
+      alert(message);
+    } finally {
+      setUploadingCover(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleSave = async () => {
+    if (!auth.currentUser) return;
+
+    try {
+      setSaving(true);
+
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          username,
+          photoURL,
+          coverURL,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        alert(data?.error || "Erro ao atualizar perfil.");
+        return;
+      }
+
+      alert("Perfil atualizado com sucesso!");
+      router.push("/dashboard");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -91,24 +172,62 @@ export default function EditProfile() {
 
         <div className="mb-6">
           <label className="block mb-2 text-red-400 font-semibold">
-            URL da Foto de Perfil
+            Foto de Perfil
+          </label>
+          {photoURL && (
+            <Image
+              src={photoURL}
+              alt="Preview da foto de perfil"
+              width={96}
+              height={96}
+              className="mb-4 h-24 w-24 rounded-full border border-red-800 object-cover"
+            />
+          )}
+          <label className="mb-3 flex cursor-pointer items-center justify-center rounded-lg border border-red-800 bg-[#1c1c1c] px-4 py-3 text-sm text-gray-300 transition hover:border-red-600 hover:text-white">
+            {uploadingPhoto ? "Enviando foto..." : "Escolher foto de perfil"}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoUpload}
+              className="hidden"
+            />
           </label>
           <input
             type="text"
             value={photoURL}
             onChange={(e) => setPhotoURL(e.target.value)}
+            placeholder="Ou cole a URL da foto"
             className="w-full p-3 bg-[#1c1c1c] border border-red-900 rounded-lg focus:outline-none focus:border-red-600"
           />
         </div>
 
         <div className="mb-8">
           <label className="block mb-2 text-red-400 font-semibold">
-            URL da Foto de Capa
+            Foto de Capa
+          </label>
+          {coverURL && (
+            <Image
+              src={coverURL}
+              alt="Preview da foto de capa"
+              width={1200}
+              height={256}
+              className="mb-4 h-32 w-full rounded-xl border border-red-800 object-cover"
+            />
+          )}
+          <label className="mb-3 flex cursor-pointer items-center justify-center rounded-lg border border-red-800 bg-[#1c1c1c] px-4 py-3 text-sm text-gray-300 transition hover:border-red-600 hover:text-white">
+            {uploadingCover ? "Enviando capa..." : "Escolher foto de capa"}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleCoverUpload}
+              className="hidden"
+            />
           </label>
           <input
             type="text"
             value={coverURL}
             onChange={(e) => setCoverURL(e.target.value)}
+            placeholder="Ou cole a URL da capa"
             className="w-full p-3 bg-[#1c1c1c] border border-red-900 rounded-lg focus:outline-none focus:border-red-600"
           />
         </div>
@@ -123,9 +242,10 @@ export default function EditProfile() {
 
           <button
             onClick={handleSave}
+            disabled={saving || uploadingPhoto || uploadingCover}
             className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg shadow-[0_0_10px_rgba(255,0,0,0.6)] transition"
           >
-            Salvar Alteracoes
+            {saving ? "Salvando..." : "Salvar Alteracoes"}
           </button>
         </div>
       </div>
