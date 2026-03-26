@@ -79,7 +79,7 @@ export default function AdminPage() {
               href="/admin/wow-tbc"
               className="group bg-[#111] border border-red-800 rounded-xl p-10 hover:border-red-500 hover:shadow-[0_0_40px_rgba(255,0,0,0.6)] transition"
             >
-              <div className="text-5xl mb-6">WOW</div>
+              <div className="text-5xl mb-6">🐉</div>
 
               <h2 className="text-2xl font-bold mb-3 group-hover:text-red-400">
                 World of Warcraft TBC
@@ -96,7 +96,7 @@ export default function AdminPage() {
               href="/admin/lol"
               className="group bg-[#111] border border-red-800 rounded-xl p-10 hover:border-red-500 hover:shadow-[0_0_40px_rgba(255,0,0,0.6)] transition"
             >
-              <div className="text-5xl mb-6">LOL</div>
+              <div className="text-5xl mb-6">⚔️</div>
 
               <h2 className="text-2xl font-bold mb-3 group-hover:text-red-400">
                 League of Legends
@@ -119,7 +119,7 @@ export default function AdminPage() {
               href="/admin/noticias"
               className="group bg-[#111] border border-red-800 rounded-xl p-8 hover:border-red-500 hover:shadow-[0_0_30px_rgba(255,0,0,0.5)] transition"
             >
-              <div className="text-4xl mb-4">NEWS</div>
+              <div className="text-4xl mb-4">📰</div>
 
               <h2 className="text-xl font-bold mb-2 group-hover:text-red-400">
                 Gerenciar Noticias
@@ -136,7 +136,7 @@ export default function AdminPage() {
               href="/admin/gerenciar-cargos"
               className="group bg-[#111] border border-red-800 rounded-xl p-8 hover:border-red-500 hover:shadow-[0_0_30px_rgba(255,0,0,0.5)] transition"
             >
-              <div className="text-4xl mb-4">ROLES</div>
+              <div className="text-4xl mb-4">🛡️</div>
 
               <h2 className="text-xl font-bold mb-2 group-hover:text-red-400">
                 Gerenciar Cargos

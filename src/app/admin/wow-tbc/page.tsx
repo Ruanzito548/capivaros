@@ -74,7 +74,7 @@ export default function AdminWOWTBC() {
             href="/admin/wow-tbc/aprovar-membros"
             className="group bg-[#111] border border-red-800 rounded-xl p-8 hover:border-red-500 hover:shadow-[0_0_35px_rgba(255,0,0,0.6)] transition"
           >
-            <div className="text-4xl mb-4">MEMBERS</div>
+            <div className="text-4xl mb-4">👥</div>
             <h2 className="text-xl font-bold mb-2 group-hover:text-red-400">
               Aprovar Membros
             </h2>
@@ -87,7 +87,7 @@ export default function AdminWOWTBC() {
             href="/admin/wow-tbc/aprovar-personagens"
             className="group bg-[#111] border border-red-800 rounded-xl p-8 hover:border-red-500 hover:shadow-[0_0_35px_rgba(255,0,0,0.6)] transition"
           >
-            <div className="text-4xl mb-4">CHARS</div>
+            <div className="text-4xl mb-4">⚔️</div>
             <h2 className="text-xl font-bold mb-2 group-hover:text-red-400">
               Aprovar Personagens
             </h2>
@@ -101,7 +101,7 @@ export default function AdminWOWTBC() {
               href="/admin/wow-tbc/personagens"
               className="group bg-[#111] border border-red-800 rounded-xl p-8 hover:border-red-500 hover:shadow-[0_0_35px_rgba(255,0,0,0.6)] transition"
             >
-              <div className="text-4xl mb-4">LINKS</div>
+              <div className="text-4xl mb-4">🗂️</div>
               <h2 className="text-xl font-bold mb-2 group-hover:text-red-400">
                 Personagens Vinculados
               </h2>
@@ -110,6 +110,18 @@ export default function AdminWOWTBC() {
               </p>
             </Link>
           )}
+
+          <div className="bg-[#111] border border-red-900 rounded-xl p-8 opacity-60">
+            <div className="text-4xl mb-4">📊</div>
+
+            <h2 className="text-xl font-bold mb-2">
+              Ranking / Logs
+            </h2>
+
+            <p className="text-gray-400 text-sm">
+              Em breve: ranking de parses e desempenho da raid.
+            </p>
+          </div>
         </div>
       </div>
     </div>
