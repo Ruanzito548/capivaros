@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState, KeyboardEvent } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 
 interface Member {
@@ -52,23 +50,13 @@ export default function WowTbcPage() {
 
   useEffect(() => {
     const fetchMembers = async () => {
-      const querySnapshot = await getDocs(collection(db, "users"));
-      const users: Member[] = [];
-
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-
-        if (data.username && data.role && data.role !== "visitor") {
-          users.push({
-            id: doc.id,
-            username: data.username,
-            role: data.role,
-            photoURL: data.photoURL,
-          });
-        }
-      });
-
-      setMembers(users);
+      try {
+        const res = await fetch("/api/members?game=wowtbc");
+        const users = (await res.json()) as Member[];
+        setMembers(Array.isArray(users) ? users : []);
+      } catch {
+        setMembers([]);
+      }
     };
 
     const fetchTop5 = async () => {

@@ -54,6 +54,10 @@ export default function Navbar() {
             Time
           </Link>
 
+          <Link href="/ranking" className="hover:text-red-500 transition">
+            Ranking
+          </Link>
+
           <a
             href="https://discord.gg/mTGxfJv9TR"
             target="_blank"
@@ -112,6 +116,10 @@ export default function Navbar() {
 
           <Link href="/time" onClick={() => setMenuOpen(false)}>
             Time
+          </Link>
+
+          <Link href="/ranking" onClick={() => setMenuOpen(false)}>
+            Ranking
           </Link>
 
           <a

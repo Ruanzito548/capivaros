@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 
 interface Member {
@@ -19,24 +17,15 @@ export default function LolPage() {
 
   useEffect(() => {
     const fetchMembers = async () => {
-      const querySnapshot = await getDocs(collection(db, "users"));
-      const users: Member[] = [];
-
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-
-        if (data.username && data.applications?.["lol"]?.status === "approved") {
-          users.push({
-            id: doc.id,
-            username: data.username,
-            role: data.role,
-            photoURL: data.photoURL,
-          });
-        }
-      });
-
-      setMembers(users);
-      setLoading(false);
+      try {
+        const res = await fetch("/api/members?game=lol");
+        const users = (await res.json()) as Member[];
+        setMembers(Array.isArray(users) ? users : []);
+      } catch {
+        setMembers([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchMembers();
