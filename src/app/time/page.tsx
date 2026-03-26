@@ -11,11 +11,12 @@ export default function TimePage() {
       imagem: "/wow.jpg",
       rota: "/time/wowtbc",
     },
-    {
-      nome: "League of Legends",
-      imagem: "/capalol.jpg",
-      rota: "/time/lol",
-    },
+    // Descomente quando quiser reativar a pagina de LoL no seletor de time.
+    // {
+    //   nome: "League of Legends",
+    //   imagem: "/capalol.jpg",
+    //   rota: "/time/lol",
+    // },
   ];
 
   return (
