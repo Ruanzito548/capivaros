@@ -387,16 +387,28 @@ export default function CharactersPage() {
 
                 <div className="mt-8 bg-[#1c1c1c] p-8 rounded-xl border border-red-900 text-center">
                   <p className="text-lg mb-4 text-gray-400">
-                    Ver personagem completo no Armory
+                    Ver personagem completo no Armory ou no Warcraft Logs
                   </p>
 
-                  <a
-                    href={`https://classicwowarmory.com/character/US/${activeCharacter.server}/${activeCharacter.name.toLowerCase()}?game_version=classic`}
-                    target="_blank"
-                    className="inline-block bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-6 py-3 rounded-lg"
-                  >
-                    Abrir Armory
-                  </a>
+                  <div className="flex flex-wrap justify-center gap-4">
+                    <a
+                      href={`https://classicwowarmory.com/character/US/${activeCharacter.server}/${activeCharacter.name.toLowerCase()}?game_version=classic`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-6 py-3 rounded-lg"
+                    >
+                      Abrir Armory
+                    </a>
+
+                    <a
+                      href={`https://www.warcraftlogs.com/character/us/${activeCharacter.server}/${encodeURIComponent(activeCharacter.name)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-bold px-6 py-3 rounded-lg"
+                    >
+                      Abrir Warcraft Logs
+                    </a>
+                  </div>
                 </div>
               </div>
             )}
