@@ -19,7 +19,7 @@ export default function Footer() {
         <div className="flex justify-center items-center gap-8">
 
           <a
-            href="https://discord.gg/wYGHbaRsJS"
+            href="https://discord.gg/ADhrNMzmTn"
             target="_blank"
             rel="noopener noreferrer"
             className="w-14 h-14 flex items-center justify-center bg-[#141414] border border-red-900 rounded-full hover:bg-red-600 hover:scale-110 transition duration-300 shadow-[0_0_12px_rgba(255,0,0,0.3)]"
