@@ -36,6 +36,10 @@ function getLogsCacheKey({
 
 let cachedToken: string | null = null;
 let tokenExpires = 0;
+const WCL_GRAPHQL_ENDPOINTS = [
+  "https://www.warcraftlogs.com/api/v2/client",
+  "https://fresh.warcraftlogs.com/api/v2/client",
+];
 
 async function getAccessToken() {
   if (cachedToken && Date.now() < tokenExpires) {
@@ -123,32 +127,71 @@ export async function GET(request: Request) {
       }
     `;
 
-    const logsRes = await fetch("https://fresh.warcraftlogs.com/api/v2/client", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query,
-        variables: {
-          name,
-          server,
-          region,
-        },
-      }),
-    });
+    let logsData: unknown = null;
+    let lastErrorMessage = "Warcraft Logs request failed";
 
-    const logsData = await logsRes.json();
+    for (const endpoint of WCL_GRAPHQL_ENDPOINTS) {
+      try {
+        const logsRes = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query,
+            variables: {
+              name,
+              server,
+              region,
+            },
+          }),
+        });
 
-    if (logsData.errors) {
+        if (!logsRes.ok) {
+          lastErrorMessage = `Warcraft Logs HTTP ${logsRes.status} on ${endpoint}`;
+          continue;
+        }
+
+        logsData = await logsRes.json();
+        break;
+      } catch (endpointError) {
+        lastErrorMessage =
+          endpointError instanceof Error
+            ? endpointError.message
+            : "Unknown Warcraft Logs error";
+      }
+    }
+
+    if (!logsData) {
+      throw new Error(lastErrorMessage);
+    }
+
+    const parsedLogsData = logsData as {
+      errors?: unknown;
+      data?: {
+        characterData?: {
+          character?: {
+            name?: string;
+            classID?: number | null;
+            zoneRankings?: {
+              bestPerformanceAverage?: number;
+              medianPerformanceAverage?: number;
+              totalKills?: number;
+            };
+          } | null;
+        };
+      };
+    };
+
+    if (parsedLogsData.errors) {
       return NextResponse.json(
-        { error: "GraphQL error", details: logsData.errors },
+        { error: "GraphQL error", details: parsedLogsData.errors },
         { status: 500 }
       );
     }
 
-    const character = logsData?.data?.characterData?.character;
+    const character = parsedLogsData.data?.characterData?.character;
 
     const payload: LogsPayload = character
       ? {
