@@ -60,6 +60,14 @@ async function getAccessToken() {
 
   const tokenData = await tokenRes.json();
 
+  console.log("WCL token response:", {
+    ok: tokenRes.ok,
+    status: tokenRes.status,
+    hasAccessToken: Boolean(tokenData.access_token),
+    error: tokenData.error ?? null,
+    errorDescription: tokenData.error_description ?? null,
+  });
+
   if (!tokenData.access_token) {
     throw new Error("Failed to obtain WarcraftLogs token");
   }
@@ -88,6 +96,13 @@ export async function GET(request: Request) {
   if (region === "NA") region = "US";
 
   try {
+    console.log("WCL logs request:", {
+      name,
+      server,
+      region,
+      zone,
+    });
+
     const cacheKey = getLogsCacheKey({ name, server, region, zone });
     const cacheRef = adminDb.collection("logsCache").doc(cacheKey);
     try {
@@ -99,6 +114,11 @@ export async function GET(request: Request) {
         typeof cacheData.fetchedAt === "number" &&
         Date.now() - cacheData.fetchedAt < LOGS_CACHE_TTL_MS
       ) {
+        console.log("WCL logs cache hit:", {
+          key: cacheKey,
+          ageMs: Date.now() - cacheData.fetchedAt,
+          hasName: Boolean(cacheData.payload?.name),
+        });
         return NextResponse.json(cacheData.payload);
       }
     } catch (cacheError) {
@@ -150,18 +170,32 @@ export async function GET(request: Request) {
 
         if (!logsRes.ok) {
           lastErrorMessage = `Warcraft Logs HTTP ${logsRes.status} on ${endpoint}`;
+          console.error("WCL endpoint HTTP failure:", {
+            endpoint,
+            status: logsRes.status,
+            statusText: logsRes.statusText,
+          });
           continue;
         }
 
         const candidateData = (await logsRes.json()) as {
           errors?: unknown;
+          data?: unknown;
         };
 
         if (candidateData.errors) {
           lastErrorMessage = `Warcraft Logs GraphQL error on ${endpoint}`;
+          console.error("WCL GraphQL errors:", {
+            endpoint,
+            errors: candidateData.errors,
+          });
           continue;
         }
 
+        console.log("WCL endpoint success:", {
+          endpoint,
+          hasData: Boolean(candidateData.data),
+        });
         logsData = candidateData;
         break;
       } catch (endpointError) {
@@ -169,10 +203,21 @@ export async function GET(request: Request) {
           endpointError instanceof Error
             ? endpointError.message
             : "Unknown Warcraft Logs error";
+        console.error("WCL endpoint exception:", {
+          endpoint,
+          message: lastErrorMessage,
+        });
       }
     }
 
     if (!logsData) {
+      console.error("WCL logs request failed after all endpoints:", {
+        name,
+        server,
+        region,
+        zone,
+        lastErrorMessage,
+      });
       throw new Error(lastErrorMessage);
     }
 
@@ -194,6 +239,14 @@ export async function GET(request: Request) {
     };
 
     const character = parsedLogsData.data?.characterData?.character;
+    console.log("WCL character result:", {
+      requestedName: name,
+      server,
+      region,
+      zone,
+      found: Boolean(character),
+      returnedName: character?.name ?? null,
+    });
 
     const payload: LogsPayload = character
       ? {
@@ -216,6 +269,11 @@ export async function GET(request: Request) {
         await cacheRef.set({
           fetchedAt: Date.now(),
           payload,
+        });
+        console.log("WCL logs cache stored:", {
+          key: cacheKey,
+          name: payload.name,
+          zone,
         });
       } catch (cacheError) {
         console.error("Logs cache write failed:", cacheError);
