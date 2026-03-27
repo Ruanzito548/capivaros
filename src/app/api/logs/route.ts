@@ -5,8 +5,8 @@ export const runtime = "nodejs";
 let cachedToken: string | null = null;
 let tokenExpires = 0;
 const WCL_GRAPHQL_ENDPOINTS = [
-  "https://www.warcraftlogs.com/api/v2/client",
   "https://fresh.warcraftlogs.com/api/v2/client",
+  "https://www.warcraftlogs.com/api/v2/client",
 ];
 
 async function getAccessToken() {

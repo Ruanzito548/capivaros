@@ -278,7 +278,7 @@ export default function PersonagensPerfil() {
                       </a>
 
                       <a
-                        href={`https://www.warcraftlogs.com/character/us/${activeCharacter.server}/${encodeURIComponent(activeCharacter.name)}`}
+                        href={`https://fresh.warcraftlogs.com/character/us/${activeCharacter.server}/${encodeURIComponent(activeCharacter.name)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-bold px-6 py-3 rounded-lg"
