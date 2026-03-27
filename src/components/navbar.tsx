@@ -23,8 +23,13 @@ export default function Navbar() {
         return;
       }
 
-      const userSnap = await getDoc(doc(db, "users", u.uid));
-      setRole((userSnap.data()?.role as string | null) ?? null);
+      try {
+        const userSnap = await getDoc(doc(db, "users", u.uid));
+        setRole((userSnap.data()?.role as string | null) ?? null);
+      } catch (error) {
+        console.error("Navbar role load failed:", error);
+        setRole(null);
+      }
     });
 
     return () => unsubscribe();

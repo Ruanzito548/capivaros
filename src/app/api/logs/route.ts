@@ -153,7 +153,16 @@ export async function GET(request: Request) {
           continue;
         }
 
-        logsData = await logsRes.json();
+        const candidateData = (await logsRes.json()) as {
+          errors?: unknown;
+        };
+
+        if (candidateData.errors) {
+          lastErrorMessage = `Warcraft Logs GraphQL error on ${endpoint}`;
+          continue;
+        }
+
+        logsData = candidateData;
         break;
       } catch (endpointError) {
         lastErrorMessage =
@@ -184,13 +193,6 @@ export async function GET(request: Request) {
       };
     };
 
-    if (parsedLogsData.errors) {
-      return NextResponse.json(
-        { error: "GraphQL error", details: parsedLogsData.errors },
-        { status: 500 }
-      );
-    }
-
     const character = parsedLogsData.data?.characterData?.character;
 
     const payload: LogsPayload = character
@@ -209,13 +211,15 @@ export async function GET(request: Request) {
           kills: 0,
         };
 
-    try {
-      await cacheRef.set({
-        fetchedAt: Date.now(),
-        payload,
-      });
-    } catch (cacheError) {
-      console.error("Logs cache write failed:", cacheError);
+    if (payload.name) {
+      try {
+        await cacheRef.set({
+          fetchedAt: Date.now(),
+          payload,
+        });
+      } catch (cacheError) {
+        console.error("Logs cache write failed:", cacheError);
+      }
     }
 
     return NextResponse.json(payload);

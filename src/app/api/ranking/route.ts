@@ -36,7 +36,8 @@ export async function GET(request: Request) {
         rankingCacheData &&
         typeof rankingCacheData.fetchedAt === "number" &&
         Date.now() - rankingCacheData.fetchedAt < RANKING_CACHE_TTL_MS &&
-        Array.isArray(rankingCacheData.entries)
+        Array.isArray(rankingCacheData.entries) &&
+        rankingCacheData.entries.length > 0
       ) {
         return NextResponse.json(rankingCacheData.entries.slice(0, limit));
       }
@@ -98,13 +99,15 @@ export async function GET(request: Request) {
       .filter((entry): entry is RankingResult => entry !== null)
       .sort((a, b) => b.percent - a.percent);
 
-    try {
-      await rankingCacheRef.set({
-        fetchedAt: Date.now(),
-        entries: ranking,
-      });
-    } catch (cacheError) {
-      console.error("Ranking cache write failed:", cacheError);
+    if (ranking.length > 0) {
+      try {
+        await rankingCacheRef.set({
+          fetchedAt: Date.now(),
+          entries: ranking,
+        });
+      } catch (cacheError) {
+        console.error("Ranking cache write failed:", cacheError);
+      }
     }
 
     return NextResponse.json(ranking.slice(0, limit));
