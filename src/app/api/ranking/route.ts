@@ -28,16 +28,20 @@ export async function GET(request: Request) {
 
   try {
     const rankingCacheRef = adminDb.collection("rankingCache").doc(zone);
-    const rankingCacheSnap = await rankingCacheRef.get();
-    const rankingCacheData = rankingCacheSnap.data();
+    try {
+      const rankingCacheSnap = await rankingCacheRef.get();
+      const rankingCacheData = rankingCacheSnap.data();
 
-    if (
-      rankingCacheData &&
-      typeof rankingCacheData.fetchedAt === "number" &&
-      Date.now() - rankingCacheData.fetchedAt < RANKING_CACHE_TTL_MS &&
-      Array.isArray(rankingCacheData.entries)
-    ) {
-      return NextResponse.json(rankingCacheData.entries.slice(0, limit));
+      if (
+        rankingCacheData &&
+        typeof rankingCacheData.fetchedAt === "number" &&
+        Date.now() - rankingCacheData.fetchedAt < RANKING_CACHE_TTL_MS &&
+        Array.isArray(rankingCacheData.entries)
+      ) {
+        return NextResponse.json(rankingCacheData.entries.slice(0, limit));
+      }
+    } catch (cacheError) {
+      console.error("Ranking cache read failed:", cacheError);
     }
 
     const usersSnapshot = await adminDb.collection("users").get();
@@ -94,10 +98,14 @@ export async function GET(request: Request) {
       .filter((entry): entry is RankingResult => entry !== null)
       .sort((a, b) => b.percent - a.percent);
 
-    await rankingCacheRef.set({
-      fetchedAt: Date.now(),
-      entries: ranking,
-    });
+    try {
+      await rankingCacheRef.set({
+        fetchedAt: Date.now(),
+        entries: ranking,
+      });
+    } catch (cacheError) {
+      console.error("Ranking cache write failed:", cacheError);
+    }
 
     return NextResponse.json(ranking.slice(0, limit));
   } catch (error: unknown) {

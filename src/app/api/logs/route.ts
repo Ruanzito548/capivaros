@@ -86,15 +86,19 @@ export async function GET(request: Request) {
   try {
     const cacheKey = getLogsCacheKey({ name, server, region, zone });
     const cacheRef = adminDb.collection("logsCache").doc(cacheKey);
-    const cacheSnap = await cacheRef.get();
-    const cacheData = cacheSnap.data();
+    try {
+      const cacheSnap = await cacheRef.get();
+      const cacheData = cacheSnap.data();
 
-    if (
-      cacheData &&
-      typeof cacheData.fetchedAt === "number" &&
-      Date.now() - cacheData.fetchedAt < LOGS_CACHE_TTL_MS
-    ) {
-      return NextResponse.json(cacheData.payload);
+      if (
+        cacheData &&
+        typeof cacheData.fetchedAt === "number" &&
+        Date.now() - cacheData.fetchedAt < LOGS_CACHE_TTL_MS
+      ) {
+        return NextResponse.json(cacheData.payload);
+      }
+    } catch (cacheError) {
+      console.error("Logs cache read failed:", cacheError);
     }
 
     const accessToken = await getAccessToken();
@@ -162,10 +166,14 @@ export async function GET(request: Request) {
           kills: 0,
         };
 
-    await cacheRef.set({
-      fetchedAt: Date.now(),
-      payload,
-    });
+    try {
+      await cacheRef.set({
+        fetchedAt: Date.now(),
+        payload,
+      });
+    } catch (cacheError) {
+      console.error("Logs cache write failed:", cacheError);
+    }
 
     return NextResponse.json(payload);
   } catch (error: unknown) {
