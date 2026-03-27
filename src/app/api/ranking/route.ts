@@ -16,6 +16,7 @@ export async function GET(request: Request) {
 
   const zone = searchParams.get("zone");
   const limitParam = searchParams.get("limit");
+  const forceRefresh = searchParams.get("force") === "1";
 
   if (!zone) {
     return NextResponse.json(
@@ -28,21 +29,25 @@ export async function GET(request: Request) {
 
   try {
     const rankingCacheRef = adminDb.collection("rankingCache").doc(zone);
-    try {
-      const rankingCacheSnap = await rankingCacheRef.get();
-      const rankingCacheData = rankingCacheSnap.data();
+    if (!forceRefresh) {
+      try {
+        const rankingCacheSnap = await rankingCacheRef.get();
+        const rankingCacheData = rankingCacheSnap.data();
 
-      if (
-        rankingCacheData &&
-        typeof rankingCacheData.fetchedAt === "number" &&
-        Date.now() - rankingCacheData.fetchedAt < RANKING_CACHE_TTL_MS &&
-        Array.isArray(rankingCacheData.entries) &&
-        rankingCacheData.entries.length > 0
-      ) {
-        return NextResponse.json(rankingCacheData.entries.slice(0, limit));
+        if (
+          rankingCacheData &&
+          typeof rankingCacheData.fetchedAt === "number" &&
+          Date.now() - rankingCacheData.fetchedAt < RANKING_CACHE_TTL_MS &&
+          Array.isArray(rankingCacheData.entries) &&
+          rankingCacheData.entries.length > 0
+        ) {
+          return NextResponse.json(rankingCacheData.entries.slice(0, limit));
+        }
+      } catch (cacheError) {
+        console.error("Ranking cache read failed:", cacheError);
       }
-    } catch (cacheError) {
-      console.error("Ranking cache read failed:", cacheError);
+    } else {
+      console.log("Ranking force refresh enabled:", { zone, limit });
     }
 
     const usersSnapshot = await adminDb.collection("users").get();
@@ -64,7 +69,8 @@ export async function GET(request: Request) {
         const url =
           `${origin}/api/logs?name=${encodeURIComponent(char.name)}` +
           `&server=${encodeURIComponent(char.server)}` +
-          `&region=US&zone=${encodeURIComponent(zone)}`;
+          `&region=US&zone=${encodeURIComponent(zone)}` +
+          `${forceRefresh ? "&force=1" : ""}`;
 
         const promise = fetch(url, {
           signal: AbortSignal.timeout(8000),
