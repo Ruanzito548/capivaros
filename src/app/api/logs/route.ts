@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { adminDb } from "@/lib/firebase-admin";
 
 export const runtime = "nodejs";
+
+const LOGS_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 let cachedToken: string | null = null;
 let tokenExpires = 0;
@@ -8,6 +11,27 @@ const WCL_GRAPHQL_ENDPOINTS = [
   "https://fresh.warcraftlogs.com/api/v2/client",
   "https://www.warcraftlogs.com/api/v2/client",
 ];
+
+function getLogsCacheKey({
+  name,
+  server,
+  region,
+  zone,
+}: {
+  name: string;
+  server: string;
+  region: string;
+  zone: string;
+}) {
+  return Buffer.from(
+    JSON.stringify({
+      name: name.trim().toLowerCase(),
+      server: server.trim().toLowerCase(),
+      region: region.trim().toUpperCase(),
+      zone,
+    })
+  ).toString("base64url");
+}
 
 async function getAccessToken() {
   if (cachedToken && Date.now() < tokenExpires) {
@@ -70,6 +94,30 @@ export async function GET(request: Request) {
       region,
       zone,
     });
+
+    const cacheKey = getLogsCacheKey({ name, server, region, zone });
+    const cacheRef = adminDb.collection("logsCache").doc(cacheKey);
+
+    try {
+      const cacheSnap = await cacheRef.get();
+      const cacheData = cacheSnap.data();
+
+      if (
+        cacheData &&
+        typeof cacheData.fetchedAt === "number" &&
+        Date.now() - cacheData.fetchedAt < LOGS_CACHE_TTL_MS &&
+        cacheData.payload?.name
+      ) {
+        console.log("WCL logs cache hit:", {
+          key: cacheKey,
+          ageMs: Date.now() - cacheData.fetchedAt,
+          hasName: Boolean(cacheData.payload?.name),
+        });
+        return NextResponse.json(cacheData.payload);
+      }
+    } catch (cacheError) {
+      console.error("Logs cache read failed:", cacheError);
+    }
 
     const accessToken = await getAccessToken();
 
@@ -193,23 +241,34 @@ export async function GET(request: Request) {
       returnedName: character?.name ?? null,
     });
 
-    return NextResponse.json(
-      character
-        ? {
-            name: character.name ?? null,
-            classID: character.classID ?? null,
-            percent: character.zoneRankings?.bestPerformanceAverage ?? 0,
-            median: character.zoneRankings?.medianPerformanceAverage ?? 0,
-            kills: character.zoneRankings?.totalKills ?? 0,
-          }
-        : {
-            name: null,
-            classID: null,
-            percent: 0,
-            median: 0,
-            kills: 0,
-          }
-    );
+    const payload = character
+      ? {
+          name: character.name ?? null,
+          classID: character.classID ?? null,
+          percent: character.zoneRankings?.bestPerformanceAverage ?? 0,
+          median: character.zoneRankings?.medianPerformanceAverage ?? 0,
+          kills: character.zoneRankings?.totalKills ?? 0,
+        }
+      : {
+          name: null,
+          classID: null,
+          percent: 0,
+          median: 0,
+          kills: 0,
+        };
+
+    if (payload.name) {
+      try {
+        await cacheRef.set({
+          fetchedAt: Date.now(),
+          payload,
+        });
+      } catch (cacheError) {
+        console.error("Logs cache write failed:", cacheError);
+      }
+    }
+
+    return NextResponse.json(payload);
   } catch (error: unknown) {
     return NextResponse.json(
       {
