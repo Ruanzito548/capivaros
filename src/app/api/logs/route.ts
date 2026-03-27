@@ -195,7 +195,7 @@ export async function GET(request: Request) {
 
     const payload: LogsPayload = character
       ? {
-          name: character.name,
+          name: character.name ?? null,
           classID: character.classID ?? null,
           percent: character.zoneRankings?.bestPerformanceAverage ?? 0,
           median: character.zoneRankings?.medianPerformanceAverage ?? 0,
