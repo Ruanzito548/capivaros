@@ -4,16 +4,27 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { isAdmin } from "@/lib/permissions";
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
+
+      if (!u) {
+        setRole(null);
+        return;
+      }
+
+      const userSnap = await getDoc(doc(db, "users", u.uid));
+      setRole((userSnap.data()?.role as string | null) ?? null);
     });
 
     return () => unsubscribe();
@@ -66,6 +77,12 @@ export default function Navbar() {
           >
             Discord
           </a>
+
+          {isAdmin(role) && (
+            <Link href="/admin" className="hover:text-red-500 transition">
+              Admin
+            </Link>
+          )}
 
           {user ? (
             <>
@@ -129,6 +146,12 @@ export default function Navbar() {
           >
             Discord
           </a>
+
+          {isAdmin(role) && (
+            <Link href="/admin" onClick={() => setMenuOpen(false)}>
+              Admin
+            </Link>
+          )}
 
           {user ? (
             <>
