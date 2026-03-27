@@ -1,4 +1,38 @@
 import { NextResponse } from "next/server";
+import { adminDb } from "@/lib/firebase-admin";
+
+export const runtime = "nodejs";
+
+const LOGS_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+
+interface LogsPayload {
+  name: string | null;
+  classID: number | null;
+  percent: number;
+  median: number;
+  kills: number;
+}
+
+function getLogsCacheKey({
+  name,
+  server,
+  region,
+  zone,
+}: {
+  name: string;
+  server: string;
+  region: string;
+  zone: string;
+}) {
+  return Buffer.from(
+    JSON.stringify({
+      name: name.trim().toLowerCase(),
+      server: server.trim().toLowerCase(),
+      region: region.trim().toUpperCase(),
+      zone,
+    })
+  ).toString("base64url");
+}
 
 let cachedToken: string | null = null;
 let tokenExpires = 0;
@@ -50,6 +84,19 @@ export async function GET(request: Request) {
   if (region === "NA") region = "US";
 
   try {
+    const cacheKey = getLogsCacheKey({ name, server, region, zone });
+    const cacheRef = adminDb.collection("logsCache").doc(cacheKey);
+    const cacheSnap = await cacheRef.get();
+    const cacheData = cacheSnap.data();
+
+    if (
+      cacheData &&
+      typeof cacheData.fetchedAt === "number" &&
+      Date.now() - cacheData.fetchedAt < LOGS_CACHE_TTL_MS
+    ) {
+      return NextResponse.json(cacheData.payload);
+    }
+
     const accessToken = await getAccessToken();
 
     const query = `
@@ -60,39 +107,33 @@ export async function GET(request: Request) {
             serverSlug: $server,
             serverRegion: $region
           ) {
-
             name
             classID
-
             zoneRankings(
               zoneID: ${zone},
               partition: 1,
               difficulty: 3
             )
-
           }
         }
       }
     `;
 
-    const logsRes = await fetch(
-      "https://fresh.warcraftlogs.com/api/v2/client",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
+    const logsRes = await fetch("https://fresh.warcraftlogs.com/api/v2/client", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query,
+        variables: {
+          name,
+          server,
+          region,
         },
-        body: JSON.stringify({
-          query,
-          variables: {
-            name,
-            server,
-            region,
-          },
-        }),
-      }
-    );
+      }),
+    });
 
     const logsData = await logsRes.json();
 
@@ -105,24 +146,33 @@ export async function GET(request: Request) {
 
     const character = logsData?.data?.characterData?.character;
 
-    if (!character) {
-      return NextResponse.json({ character: null });
-    }
+    const payload: LogsPayload = character
+      ? {
+          name: character.name,
+          classID: character.classID ?? null,
+          percent: character.zoneRankings?.bestPerformanceAverage ?? 0,
+          median: character.zoneRankings?.medianPerformanceAverage ?? 0,
+          kills: character.zoneRankings?.totalKills ?? 0,
+        }
+      : {
+          name: null,
+          classID: null,
+          percent: 0,
+          median: 0,
+          kills: 0,
+        };
 
-    const rankings = character.zoneRankings ?? {};
-
-    return NextResponse.json({
-      name: character.name,
-      classID: character.classID,
-      percent: rankings.bestPerformanceAverage ?? 0,
-      median: rankings.medianPerformanceAverage ?? 0,
-      kills: rankings.totalKills ?? 0,
+    await cacheRef.set({
+      fetchedAt: Date.now(),
+      payload,
     });
-  } catch (error: any) {
+
+    return NextResponse.json(payload);
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         error: "Unexpected server error",
-        message: error?.message,
+        message: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );
