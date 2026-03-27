@@ -3,8 +3,6 @@ import { adminDb } from "@/lib/firebase-admin";
 
 export const runtime = "nodejs";
 
-const RANKING_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-
 interface RankingResult {
   username: string;
   character: string;
@@ -16,7 +14,6 @@ export async function GET(request: Request) {
 
   const zone = searchParams.get("zone");
   const limitParam = searchParams.get("limit");
-  const forceRefresh = searchParams.get("force") === "1";
 
   if (!zone) {
     return NextResponse.json(
@@ -28,28 +25,6 @@ export async function GET(request: Request) {
   const limit = limitParam ? Number(limitParam) : 9999;
 
   try {
-    const rankingCacheRef = adminDb.collection("rankingCache").doc(zone);
-    if (!forceRefresh) {
-      try {
-        const rankingCacheSnap = await rankingCacheRef.get();
-        const rankingCacheData = rankingCacheSnap.data();
-
-        if (
-          rankingCacheData &&
-          typeof rankingCacheData.fetchedAt === "number" &&
-          Date.now() - rankingCacheData.fetchedAt < RANKING_CACHE_TTL_MS &&
-          Array.isArray(rankingCacheData.entries) &&
-          rankingCacheData.entries.length > 0
-        ) {
-          return NextResponse.json(rankingCacheData.entries.slice(0, limit));
-        }
-      } catch (cacheError) {
-        console.error("Ranking cache read failed:", cacheError);
-      }
-    } else {
-      console.log("Ranking force refresh enabled:", { zone, limit });
-    }
-
     const usersSnapshot = await adminDb.collection("users").get();
 
     if (!usersSnapshot || usersSnapshot.empty) {
@@ -69,8 +44,7 @@ export async function GET(request: Request) {
         const url =
           `${origin}/api/logs?name=${encodeURIComponent(char.name)}` +
           `&server=${encodeURIComponent(char.server)}` +
-          `&region=US&zone=${encodeURIComponent(zone)}` +
-          `${forceRefresh ? "&force=1" : ""}`;
+          `&region=US&zone=${encodeURIComponent(zone)}`;
 
         const promise = fetch(url, {
           signal: AbortSignal.timeout(8000),
@@ -103,20 +77,10 @@ export async function GET(request: Request) {
 
     const ranking = results
       .filter((entry): entry is RankingResult => entry !== null)
-      .sort((a, b) => b.percent - a.percent);
+      .sort((a, b) => b.percent - a.percent)
+      .slice(0, limit);
 
-    if (ranking.length > 0) {
-      try {
-        await rankingCacheRef.set({
-          fetchedAt: Date.now(),
-          entries: ranking,
-        });
-      } catch (cacheError) {
-        console.error("Ranking cache write failed:", cacheError);
-      }
-    }
-
-    return NextResponse.json(ranking.slice(0, limit));
+    return NextResponse.json(ranking);
   } catch (error: unknown) {
     return NextResponse.json(
       {
