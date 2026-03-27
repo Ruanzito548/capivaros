@@ -65,6 +65,13 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-transparent text-white px-6 py-16 flex justify-center">
       <div className="max-w-6xl w-full">
+        <button
+          onClick={() => router.push("/dashboard")}
+          className="mb-8 text-sm text-gray-400 transition hover:text-red-400"
+        >
+          Voltar para o Dashboard
+        </button>
+
         <h1 className="text-5xl font-bold text-red-500 mb-14 text-center drop-shadow-[0_0_20px_rgba(255,0,0,0.8)]">
           Painel Administrativo
         </h1>

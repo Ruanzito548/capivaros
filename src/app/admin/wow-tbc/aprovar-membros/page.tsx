@@ -161,6 +161,13 @@ export default function AprovarMembrosWOWTBC() {
   return (
     <div className="min-h-screen bg-transparent text-white p-12 flex justify-center">
       <div className="max-w-5xl w-full">
+        <button
+          onClick={() => router.push("/admin/wow-tbc")}
+          className="mb-6 text-sm text-gray-400 transition hover:text-red-400"
+        >
+          Voltar para WoW TBC Admin
+        </button>
+
         <h1 className="text-4xl font-bold text-red-500 mb-10">
           Aprovar Membros - WoW TBC
         </h1>

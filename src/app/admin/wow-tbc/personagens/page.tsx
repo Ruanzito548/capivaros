@@ -136,6 +136,13 @@ export default function AdminCharactersPage() {
     <div className="min-h-screen bg-transparent text-white p-12 flex justify-center">
       <div className="max-w-6xl w-full">
         <div className="mb-10">
+          <button
+            onClick={() => router.push("/admin/wow-tbc")}
+            className="mb-6 text-sm text-gray-400 transition hover:text-red-400"
+          >
+            Voltar para WoW TBC Admin
+          </button>
+
           <h1 className="text-4xl font-bold text-red-500">
             Personagens Vinculados
           </h1>

@@ -130,6 +130,12 @@ export default function AdminMembersPage() {
     <div className="min-h-screen bg-transparent text-white p-12 flex justify-center">
       <div className="max-w-6xl w-full">
         <div className="mb-10">
+          <button
+            onClick={() => router.push("/admin")}
+            className="mb-6 text-sm text-gray-400 transition hover:text-red-400"
+          >
+            Voltar para Admin
+          </button>
           <h1 className="text-4xl font-bold text-red-500">
             Todos os Membros
           </h1>
