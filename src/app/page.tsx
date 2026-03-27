@@ -104,7 +104,7 @@ export default function Home() {
           </Link>
 
           <a
-            href="https://discord.gg/mTGxfJv9TR"
+            href="https://discord.gg/ADhrNMzmTn"
             target="_blank"
             className="border border-red-700 hover:bg-red-900 px-8 py-3 rounded-lg"
           >
