@@ -149,7 +149,7 @@ export default function RaidRankingPage() {
                 })}
               </div>
 
-              <div className="mt-8 space-y-4 md:mt-14">
+              <div className="mt-10 space-y-4 md:mt-20">
                 {remaining.map((entry, index) => (
                   <div
                     key={`${entry.username}-${entry.character}-${index}`}

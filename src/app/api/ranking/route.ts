@@ -106,8 +106,7 @@ export async function GET(request: Request) {
 
     const ranking = results
       .filter((entry): entry is RankingResult => entry !== null)
-      .sort((a, b) => b.percent - a.percent)
-      .slice(0, limit);
+      .sort((a, b) => b.percent - a.percent);
 
     if (ranking.length > 0) {
       try {
@@ -120,7 +119,7 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json(ranking);
+    return NextResponse.json(ranking.slice(0, limit));
   } catch (error: unknown) {
     return NextResponse.json(
       {
