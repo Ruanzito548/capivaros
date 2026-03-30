@@ -164,7 +164,7 @@ export default function RankingPage() {
                     </div>
 
                     {remaining.length > 0 ? (
-                      <div className="space-y-3">
+                      <div className="mt-6 space-y-3 md:mt-12">
                         {remaining.map((entry, index) => (
                           <div
                             key={`${entry.username}-${entry.character}-${index}`}

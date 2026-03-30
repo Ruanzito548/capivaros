@@ -38,7 +38,11 @@ export async function GET(request: Request) {
         typeof rankingCacheData.fetchedAt === "number" &&
         Date.now() - rankingCacheData.fetchedAt < RANKING_CACHE_TTL_MS &&
         Array.isArray(rankingCacheData.entries) &&
-        rankingCacheData.entries.length > 0
+        rankingCacheData.entries.length > 0 &&
+        rankingCacheData.entries.every(
+          (entry: RankingResult) =>
+            typeof entry.photoURL === "string" && entry.photoURL.trim() !== ""
+        )
       ) {
         return NextResponse.json(rankingCacheData.entries.slice(0, limit));
       }
