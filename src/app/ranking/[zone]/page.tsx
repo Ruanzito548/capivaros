@@ -14,6 +14,27 @@ const RAID_NAMES: Record<string, string> = {
   "1048": "Gruul & Magtheridon",
 };
 
+const PODIUM_STYLE = [
+  {
+    wrapper: "order-2 md:order-2",
+    card: "min-h-[200px] bg-gradient-to-b from-yellow-300/25 via-yellow-500/15 to-[#1a1200] border-yellow-400/80",
+    place: "text-yellow-300",
+    score: "text-yellow-200",
+  },
+  {
+    wrapper: "order-1 md:order-1 md:translate-y-8",
+    card: "min-h-[174px] bg-gradient-to-b from-slate-200/20 via-slate-400/10 to-[#121212] border-slate-300/60",
+    place: "text-slate-200",
+    score: "text-slate-100",
+  },
+  {
+    wrapper: "order-3 md:order-3 md:translate-y-14",
+    card: "min-h-[154px] bg-gradient-to-b from-amber-700/30 via-amber-900/15 to-[#121212] border-amber-600/70",
+    place: "text-amber-400",
+    score: "text-amber-200",
+  },
+];
+
 export default function RaidRankingPage() {
   const params = useParams();
   const zone = params?.zone as string;
@@ -56,47 +77,52 @@ export default function RaidRankingPage() {
     fetchRanking();
   }, [zone]);
 
+  const podium = ranking.slice(0, 3);
+  const remaining = ranking.slice(3);
+
   return (
-    <div className="min-h-screen bg-transparent text-white py-20 px-6">
-      <h1 className="text-5xl font-bold text-center text-red-500 mb-4 drop-shadow-[0_0_15px_rgba(255,0,0,0.8)]">
+    <div className="min-h-screen bg-transparent px-6 py-20 text-white">
+      <h1 className="mb-4 text-center text-5xl font-bold text-red-500 drop-shadow-[0_0_15px_rgba(255,0,0,0.8)]">
         {raidName}
       </h1>
 
-      <h2 className="text-xl text-center text-gray-400 mb-16">
+      <h2 className="mb-16 text-center text-xl text-gray-400">
         Ranking Completo da Guilda
       </h2>
 
       {loading ? (
-        <div className="text-center text-red-500 text-xl">
+        <div className="text-center text-xl text-red-500">
           Carregando ranking...
         </div>
       ) : (
-        <div className="max-w-4xl mx-auto space-y-4">
+        <div className="mx-auto max-w-5xl">
           {ranking.length > 0 ? (
-            ranking.map((entry, index) => {
-              const isTop3 = index < 3;
+            <>
+              <div className="mb-10 grid gap-4 md:grid-cols-3 md:items-end">
+                {podium.map((entry, index) => {
+                  const style = PODIUM_STYLE[index];
 
-              return (
-                <div
-                  key={index}
-                  className={`rounded-xl p-6 flex justify-between items-center border shadow-[0_0_15px_rgba(255,0,0,0.2)]
-                    ${
-                      isTop3
-                        ? "bg-red-900/40 border-red-600 shadow-[0_0_25px_rgba(255,0,0,0.6)]"
-                        : "bg-[#141414] border-red-900"
-                    }`}
-                >
-                  <div>
-                    <span className="font-bold text-lg">
-                      #{index + 1}
-                    </span>{" "}
-                    — {entry.character}{" "}
-                    <span className="text-gray-400">
-                      (
+                  return (
+                    <div
+                      key={`${entry.username}-${entry.character}`}
+                      className={style.wrapper}
+                    >
+                      <div
+                        className={`flex h-full flex-col justify-between rounded-2xl border px-5 py-6 text-center shadow-[0_0_20px_rgba(0,0,0,0.35)] ${style.card}`}
+                      >
+                        <div>
+                          <p
+                            className={`text-sm font-bold uppercase tracking-[0.3em] ${style.place}`}
+                          >
+                            #{index + 1}
+                          </p>
+                          <p className="mt-4 text-2xl font-bold leading-tight text-white">
+                            {entry.character}
+                          </p>
                           <span
                             role="link"
                             tabIndex={0}
-                            className="text-red-400 underline cursor-pointer"
+                            className="mt-3 inline-block cursor-pointer text-base text-red-300 underline underline-offset-2"
                             onClick={() => goToProfile(entry.username)}
                             onKeyDown={(event) =>
                               handleUsernameKeyDown(event, entry.username)
@@ -104,20 +130,56 @@ export default function RaidRankingPage() {
                           >
                             {entry.username}
                           </span>
-                          )
-                    </span>
-                  </div>
+                        </div>
 
-                  <div className="text-yellow-400 font-bold text-2xl">
-                    {entry.percent.toFixed(2)} Parse
+                        <p className={`mt-6 text-3xl font-bold ${style.score}`}>
+                          {entry.percent.toFixed(2)} Parse
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="space-y-4">
+                {remaining.map((entry, index) => (
+                  <div
+                    key={`${entry.username}-${entry.character}-${index}`}
+                    className="flex items-center justify-between rounded-xl border border-red-900 bg-[#141414] p-6 shadow-[0_0_15px_rgba(255,0,0,0.2)]"
+                  >
+                    <div className="pr-4">
+                      <span className="text-lg font-bold text-red-300">
+                        #{index + 4}
+                      </span>
+                      <span className="mx-3 text-red-900/70">|</span>
+                      <span className="text-lg text-white">{entry.character}</span>
+                      <span className="text-gray-400">
+                        {" "}
+                        (
+                        <span
+                          role="link"
+                          tabIndex={0}
+                          className="cursor-pointer text-red-400 underline"
+                          onClick={() => goToProfile(entry.username)}
+                          onKeyDown={(event) =>
+                            handleUsernameKeyDown(event, entry.username)
+                          }
+                        >
+                          {entry.username}
+                        </span>
+                        )
+                      </span>
+                    </div>
+
+                    <div className="text-xl font-bold text-yellow-400">
+                      {entry.percent.toFixed(2)} Parse
+                    </div>
                   </div>
-                </div>
-              );
-            })
+                ))}
+              </div>
+            </>
           ) : (
-            <p className="text-center text-gray-500">
-              Nenhum ranking disponível.
-            </p>
+            <p className="text-center text-gray-500">Nenhum ranking disponivel.</p>
           )}
         </div>
       )}
