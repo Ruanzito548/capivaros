@@ -42,13 +42,17 @@ export default function RankingPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const goToProfile = (username: string) => {
+  const goToProfile = (username?: string) => {
+    if (typeof username !== "string" || username.trim() === "") {
+      return;
+    }
+
     router.push(`/perfil/wow-tbc/${username.toLowerCase()}`);
   };
 
   const handleUsernameClick = (
     event: MouseEvent<HTMLSpanElement>,
-    username: string
+    username?: string
   ) => {
     event.preventDefault();
     event.stopPropagation();
@@ -57,7 +61,7 @@ export default function RankingPage() {
 
   const handleUsernameKeyDown = (
     event: KeyboardEvent<HTMLSpanElement>,
-    username: string
+    username?: string
   ) => {
     event.stopPropagation();
     if (event.key === "Enter" || event.key === " ") {

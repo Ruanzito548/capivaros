@@ -46,13 +46,17 @@ export default function RaidRankingPage() {
 
   const raidName = RAID_NAMES[zone] ?? "Raid Desconhecida";
 
-  const goToProfile = (username: string) => {
+  const goToProfile = (username?: string) => {
+    if (typeof username !== "string" || username.trim() === "") {
+      return;
+    }
+
     router.push(`/perfil/wow-tbc/${username.toLowerCase()}`);
   };
 
   const handleUsernameKeyDown = (
     event: KeyboardEvent<HTMLSpanElement>,
-    username: string
+    username?: string
   ) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();

@@ -7,7 +7,7 @@ import { getRoleLabel, isFounder, isOfficerTBC } from "@/lib/permissions";
 interface Member {
   id: string;
   username: string;
-  role: string;
+  role?: string;
   photoURL?: string;
 }
 
@@ -39,7 +39,11 @@ export default function WowTbcPage() {
     const memberList: Member[] = [];
 
     for (const member of members) {
-      const normalizedRole = member.role.toLowerCase();
+      if (typeof member.username !== "string" || member.username.trim() === "") {
+        continue;
+      }
+
+      const normalizedRole = (member.role ?? "").toLowerCase();
 
       if (ADMIN_ROLES.has(normalizedRole)) {
         adminList.push(member);
@@ -96,9 +100,9 @@ export default function WowTbcPage() {
               key={member.id}
               member={member}
               onClick={() =>
-                router.push(`/perfil/wow-tbc/${member.username.toLowerCase()}`)
-              }
-            />
+                  router.push(`/perfil/wow-tbc/${member.username.toLowerCase()}`)
+                }
+              />
           ))}
         </div>
       </section>
@@ -113,12 +117,16 @@ function MemberCard({
   member: Member;
   onClick: () => void;
 }) {
+  const displayName =
+    typeof member.username === "string" && member.username.trim() !== ""
+      ? member.username
+      : "Usuario";
   const avatar =
     member.photoURL && member.photoURL.trim() !== ""
       ? member.photoURL
       : "/capilogo.png";
 
-  const role = member.role.toLowerCase();
+  const role = (member.role ?? "").toLowerCase();
 
   return (
     <div
@@ -128,27 +136,27 @@ function MemberCard({
       <div className="mb-4 w-[90px] h-[90px] rounded-full overflow-hidden border-2 border-red-600 shadow-[0_0_15px_rgba(255,0,0,0.6)] bg-zinc-800">
         <img
           src={avatar}
-          alt={member.username}
+          alt={displayName}
           className="w-full h-full object-cover"
         />
       </div>
 
       <h2 className="text-2xl font-bold text-red-400 mb-3">
-        {member.username}
+        {displayName}
       </h2>
 
       <span
         className={`inline-block px-4 py-1 rounded-full text-sm font-semibold ${
-          isFounder(member.role)
+          isFounder(member.role ?? "")
             ? "bg-red-600"
-            : isOfficerTBC(member.role)
+            : isOfficerTBC(member.role ?? "")
             ? "bg-yellow-500 text-black"
             : role === "admin"
             ? "bg-red-800"
             : "bg-zinc-700"
         }`}
       >
-        {getRoleLabel(member.role)}
+        {getRoleLabel(member.role ?? "member")}
       </span>
     </div>
   );

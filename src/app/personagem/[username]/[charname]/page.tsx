@@ -12,6 +12,10 @@ export default function CharacterProfile() {
 
   const server = "nightslayer";
   const region = "US";
+  const normalizedUsername =
+    typeof username === "string" ? username.toLowerCase() : "";
+  const normalizedCharname =
+    typeof charname === "string" ? charname.toLowerCase() : "";
 
   useEffect(() => {
     const fetchCharacter = async () => {
@@ -21,12 +25,13 @@ export default function CharacterProfile() {
         const data = doc.data();
 
         if (
-          data.username &&
-          data.username.toLowerCase() === username.toLowerCase()
+          typeof data.username === "string" &&
+          data.username.toLowerCase() === normalizedUsername
         ) {
           const found = data.characters?.find(
             (c: any) =>
-              c.name.toLowerCase() === charname.toLowerCase()
+              typeof c?.name === "string" &&
+              c.name.toLowerCase() === normalizedCharname
           );
 
           if (found) {
@@ -39,7 +44,7 @@ export default function CharacterProfile() {
     };
 
     fetchCharacter();
-  }, [username, charname]);
+  }, [normalizedCharname, normalizedUsername]);
 
   if (loading) {
     return (

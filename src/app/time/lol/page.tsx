@@ -7,7 +7,7 @@ import { getRoleLabel, isFounder, isOfficerTBC } from "@/lib/permissions";
 interface Member {
   id: string;
   username: string;
-  role: string;
+  role?: string;
   photoURL?: string;
 }
 
@@ -49,7 +49,12 @@ export default function LolPage() {
 
       <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10">
 
-        {members.map((member) => {
+        {members
+          .filter(
+            (member) =>
+              typeof member.username === "string" && member.username.trim() !== ""
+          )
+          .map((member) => {
           const avatar =
             member.photoURL && member.photoURL.trim() !== ""
               ? member.photoURL
@@ -78,14 +83,14 @@ export default function LolPage() {
 
               <span
                 className={`inline-block px-4 py-1 rounded-full text-sm font-semibold ${
-                  isFounder(member.role)
+                  isFounder(member.role ?? "")
                     ? "bg-blue-600"
-                    : isOfficerTBC(member.role)
+                    : isOfficerTBC(member.role ?? "")
                     ? "bg-yellow-500 text-black"
                     : "bg-zinc-700"
                 }`}
               >
-                {getRoleLabel(member.role)}
+                {getRoleLabel(member.role ?? "member")}
               </span>
             </div>
           );

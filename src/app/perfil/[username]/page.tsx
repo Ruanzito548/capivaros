@@ -14,6 +14,9 @@ export default function PerfilUser() {
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const normalizedUsername =
+    typeof username === "string" ? username.toLowerCase() : "";
+
   useEffect(() => {
 
     const fetchUser = async () => {
@@ -22,7 +25,11 @@ export default function PerfilUser() {
 
       const user = snap.docs
         .map(doc => doc.data())
-        .find((u: any) => u.username.toLowerCase() === username.toLowerCase());
+        .find(
+          (u: any) =>
+            typeof u?.username === "string" &&
+            u.username.toLowerCase() === normalizedUsername
+        );
 
       if (!user) {
         setLoading(false);
@@ -36,7 +43,7 @@ export default function PerfilUser() {
 
     fetchUser();
 
-  }, [username]);
+  }, [normalizedUsername]);
 
   if (loading) {
 
