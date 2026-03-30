@@ -7,6 +7,7 @@ interface RankingEntry {
   username: string;
   character: string;
   percent: number;
+  photoURL?: string;
 }
 
 const RAID_NAMES: Record<string, string> = {
@@ -111,6 +112,13 @@ export default function RaidRankingPage() {
                         className={`flex h-full flex-col justify-between rounded-2xl border px-5 py-6 text-center shadow-[0_0_20px_rgba(0,0,0,0.35)] ${style.card}`}
                       >
                         <div>
+                          <div className="mx-auto mb-5 h-20 w-20 overflow-hidden rounded-full border-2 border-white/20 shadow-[0_0_18px_rgba(0,0,0,0.35)]">
+                            <img
+                              src={entry.photoURL || "/capilogo.png"}
+                              alt={`Foto de perfil de ${entry.username}`}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
                           <p
                             className={`text-sm font-bold uppercase tracking-[0.3em] ${style.place}`}
                           >

@@ -8,6 +8,7 @@ interface RankingResult {
   username: string;
   character: string;
   percent: number;
+  photoURL?: string;
 }
 
 export async function GET(request: Request) {
@@ -85,6 +86,10 @@ export async function GET(request: Request) {
               username: user.username || "Desconhecido",
               character: data.name || char.name,
               percent,
+              photoURL:
+                typeof user.photoURL === "string" && user.photoURL.trim() !== ""
+                  ? user.photoURL
+                  : "/capilogo.png",
             };
           })
           .catch(() => null);
