@@ -37,6 +37,7 @@ export async function GET(request: Request) {
         rankingCacheData &&
         typeof rankingCacheData.fetchedAt === "number" &&
         Date.now() - rankingCacheData.fetchedAt < RANKING_CACHE_TTL_MS &&
+        rankingCacheData.isComplete === true &&
         Array.isArray(rankingCacheData.entries) &&
         rankingCacheData.entries.length > 0 &&
         rankingCacheData.entries.every(
@@ -112,6 +113,7 @@ export async function GET(request: Request) {
       try {
         await rankingCacheRef.set({
           fetchedAt: Date.now(),
+          isComplete: true,
           entries: ranking,
         });
       } catch (cacheError) {
