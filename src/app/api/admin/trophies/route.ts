@@ -15,42 +15,42 @@ const DEFAULT_WOW_TBC_TROPHIES = [
   {
     name: "Top 1 Season 1 Karazhan",
     description: "Conquistou o 1 lugar no ranking da Season 1 de Karazhan.",
-    icon: "🥇",
+    icon: "/medalhas/1kara.png",
   },
   {
     name: "Top 2 Season 1 Karazhan",
     description: "Conquistou o 2 lugar no ranking da Season 1 de Karazhan.",
-    icon: "🥈",
+    icon: "/medalhas/2kara.png",
   },
   {
     name: "Top 3 Season 1 Karazhan",
     description: "Conquistou o 3 lugar no ranking da Season 1 de Karazhan.",
-    icon: "🥉",
+    icon: "/medalhas/3kara.png",
   },
   {
     name: "Top 1 Season 1 Gruull/Mag",
     description: "Conquistou o 1 lugar no ranking da Season 1 de Gruull/Mag.",
-    icon: "🥇",
+    icon: "/medalhas/1mag.png",
   },
   {
     name: "Top 2 Season 1 Gruull/Mag",
     description: "Conquistou o 2 lugar no ranking da Season 1 de Gruull/Mag.",
-    icon: "🥈",
+    icon: "/medalhas/2mag.png",
   },
   {
     name: "Top 3 Season 1 Gruull/Mag",
     description: "Conquistou o 3 lugar no ranking da Season 1 de Gruull/Mag.",
-    icon: "🥉",
+    icon: "/medalhas/3mag.png",
   },
   {
     name: "Entre os 5 melhores Gruul/Mag",
     description: "Terminou entre os 5 melhores membros em Gruul/Mag na Season 1.",
-    icon: "🏅",
+    icon: "/medalhas/1mag.png",
   },
   {
     name: "Entre os 5 melhores Karazhan",
     description: "Terminou entre os 5 melhores membros em Karazhan na Season 1.",
-    icon: "🏅",
+    icon: "/medalhas/1kara.png",
   },
 ];
 

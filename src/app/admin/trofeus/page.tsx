@@ -6,6 +6,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { canManageRoles } from "@/lib/permissions";
+import TrophyIcon from "@/components/trophy-icon";
 
 interface AdminUser {
   id: string;
@@ -22,6 +23,15 @@ interface AdminTrophy {
   game: string;
 }
 
+const MEDAL_ICON_OPTIONS = [
+  { label: "1 Karazhan", value: "/medalhas/1kara.png" },
+  { label: "2 Karazhan", value: "/medalhas/2kara.png" },
+  { label: "3 Karazhan", value: "/medalhas/3kara.png" },
+  { label: "1 Gruul/Mag", value: "/medalhas/1mag.png" },
+  { label: "2 Gruul/Mag", value: "/medalhas/2mag.png" },
+  { label: "3 Gruul/Mag", value: "/medalhas/3mag.png" },
+];
+
 export default function AdminTrofeusPage() {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -33,7 +43,7 @@ export default function AdminTrofeusPage() {
   const [seeding, setSeeding] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [icon, setIcon] = useState("🏆");
+  const [icon, setIcon] = useState(MEDAL_ICON_OPTIONS[0].value);
   const router = useRouter();
 
   const getToken = useCallback(async () => {
@@ -149,7 +159,7 @@ export default function AdminTrofeusPage() {
 
       setName("");
       setDescription("");
-      setIcon("🏆");
+      setIcon(MEDAL_ICON_OPTIONS[0].value);
       await fetchTrophies();
     } catch (error) {
       alert(error instanceof Error ? error.message : "Erro ao criar trofeu.");
@@ -292,15 +302,42 @@ export default function AdminTrofeusPage() {
               />
             </label>
 
-            <label className="mb-6 block text-sm text-gray-300">
-              Icone
-              <input
-                value={icon}
-                onChange={(event) => setIcon(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-red-900 bg-[#1b1b1b] p-3 text-white"
-                placeholder="🏆"
-              />
-            </label>
+            <div className="mb-6">
+              <p className="mb-3 text-sm text-gray-300">
+                Icone
+              </p>
+
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                {MEDAL_ICON_OPTIONS.map((option) => {
+                  const isSelected = icon === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setIcon(option.value)}
+                      className={`rounded-xl border p-4 text-center transition ${
+                        isSelected
+                          ? "border-red-500 bg-red-900/30"
+                          : "border-red-900 bg-[#1b1b1b] hover:border-red-700"
+                      }`}
+                    >
+                      <div className="mb-2 flex justify-center">
+                        <TrophyIcon
+                          icon={option.value}
+                          alt={option.label}
+                          className="h-14 w-14"
+                        />
+                      </div>
+
+                      <div className="text-xs text-gray-300">
+                        {option.label}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <button
               type="submit"
@@ -345,7 +382,7 @@ export default function AdminTrofeusPage() {
               >
                 {trophies.map((trophy) => (
                   <option key={trophy.id} value={trophy.id}>
-                    {trophy.icon || "🏆"} {trophy.name}
+                    {trophy.name}
                   </option>
                 ))}
               </select>
@@ -373,8 +410,12 @@ export default function AdminTrofeusPage() {
                   key={trophy.id}
                   className="rounded-xl border border-red-900/60 bg-black/20 p-5"
                 >
-                  <div className="mb-3 text-3xl">
-                    {trophy.icon || "🏆"}
+                  <div className="mb-3 flex justify-center">
+                    <TrophyIcon
+                      icon={trophy.icon}
+                      alt={trophy.name}
+                      className="h-16 w-16"
+                    />
                   </div>
 
                   <p className="font-semibold text-red-400">

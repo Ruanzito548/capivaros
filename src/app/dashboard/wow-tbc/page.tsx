@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { getRoleLabel } from "@/lib/permissions";
 import { getGameTrophies, Trophy } from "@/lib/trophies";
+import TrophyIcon from "@/components/trophy-icon";
 
 interface WowDashboardUserData {
   username?: string;
@@ -194,8 +195,12 @@ export default function DashboardWOWTBC() {
                   key={`${trophy.name}-${index}`}
                   className="rounded-xl border border-red-900 bg-[#111] p-6 text-center shadow-[0_0_10px_rgba(255,0,0,0.2)]"
                 >
-                  <div className="mb-3 text-4xl">
-                    {trophy.icon || "🏆"}
+                  <div className="mb-3 flex justify-center text-4xl">
+                    <TrophyIcon
+                      icon={trophy.icon}
+                      alt={trophy.name}
+                      className="h-14 w-14"
+                    />
                   </div>
 
                   <p className="font-semibold text-red-400">
