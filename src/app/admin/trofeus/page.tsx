@@ -20,6 +20,8 @@ interface AdminTrophy {
   name: string;
   description: string;
   icon?: string;
+  points: number;
+  rarity: string;
   game: string;
 }
 
@@ -30,6 +32,14 @@ const MEDAL_ICON_OPTIONS = [
   { label: "1 Gruul/Mag", value: "/trofeus/1mag.png" },
   { label: "2 Gruul/Mag", value: "/trofeus/2mag.png" },
   { label: "3 Gruul/Mag", value: "/trofeus/3mag.png" },
+];
+
+const RARITY_OPTIONS = [
+  "Comum",
+  "Incomum",
+  "Raro",
+  "Epico",
+  "Lendario",
 ];
 
 export default function AdminTrofeusPage() {
@@ -44,6 +54,8 @@ export default function AdminTrofeusPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [icon, setIcon] = useState(MEDAL_ICON_OPTIONS[0].value);
+  const [points, setPoints] = useState("25");
+  const [rarity, setRarity] = useState("Comum");
   const router = useRouter();
 
   const getToken = useCallback(async () => {
@@ -149,6 +161,8 @@ export default function AdminTrofeusPage() {
           name,
           description,
           icon,
+          points: Number(points),
+          rarity,
         }),
       });
 
@@ -160,6 +174,8 @@ export default function AdminTrofeusPage() {
       setName("");
       setDescription("");
       setIcon(MEDAL_ICON_OPTIONS[0].value);
+      setPoints("25");
+      setRarity("Comum");
       await fetchTrophies();
     } catch (error) {
       alert(error instanceof Error ? error.message : "Erro ao criar trofeu.");
@@ -302,6 +318,35 @@ export default function AdminTrofeusPage() {
               />
             </label>
 
+            <div className="mb-4 grid gap-4 md:grid-cols-2">
+              <label className="block text-sm text-gray-300">
+                Pontos
+                <input
+                  type="number"
+                  min="0"
+                  value={points}
+                  onChange={(event) => setPoints(event.target.value)}
+                  className="mt-2 w-full rounded-lg border border-red-900 bg-[#1b1b1b] p-3 text-white"
+                  required
+                />
+              </label>
+
+              <label className="block text-sm text-gray-300">
+                Raridade
+                <select
+                  value={rarity}
+                  onChange={(event) => setRarity(event.target.value)}
+                  className="mt-2 w-full rounded-lg border border-red-900 bg-[#1b1b1b] p-3 text-white"
+                >
+                  {RARITY_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
             <div className="mb-6">
               <p className="mb-3 text-sm text-gray-300">
                 Icone
@@ -382,7 +427,7 @@ export default function AdminTrofeusPage() {
               >
                 {trophies.map((trophy) => (
                   <option key={trophy.id} value={trophy.id}>
-                    {trophy.name}
+                    {trophy.name} - {trophy.points} pts - {trophy.rarity}
                   </option>
                 ))}
               </select>
@@ -425,6 +470,11 @@ export default function AdminTrofeusPage() {
                   <p className="mt-2 text-sm text-gray-400">
                     {trophy.description}
                   </p>
+
+                  <div className="mt-4 flex items-center justify-between text-xs text-gray-300">
+                    <span>{trophy.points} pts</span>
+                    <span>{trophy.rarity}</span>
+                  </div>
                 </div>
               ))}
             </div>

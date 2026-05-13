@@ -11,6 +11,8 @@ interface TrophyEntry {
     name: string;
     description: string;
     icon?: string;
+    points?: number;
+    rarity?: string;
     awardedAt?: number | null;
   };
 }
@@ -43,6 +45,8 @@ export async function GET() {
             name: trophy.name,
             description: trophy.description,
             icon: trophy.icon,
+            points: typeof trophy.points === "number" ? trophy.points : 0,
+            rarity: trophy.rarity || "Comum",
             awardedAt:
               typeof trophy.awardedAt === "number" ? trophy.awardedAt : null,
           },

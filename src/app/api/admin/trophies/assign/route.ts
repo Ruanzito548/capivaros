@@ -99,6 +99,8 @@ export async function POST(request: NextRequest) {
         name: trophyData.name || "Sem nome",
         description: trophyData.description || "",
         icon: trophyData.icon || "🏆",
+        points: typeof trophyData.points === "number" ? trophyData.points : 0,
+        rarity: trophyData.rarity || "Comum",
         awardedAt: Date.now(),
       },
     ];

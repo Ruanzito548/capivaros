@@ -9,6 +9,8 @@ interface TrophyPayload {
   name?: string;
   description?: string;
   icon?: string;
+  points?: number;
+  rarity?: string;
 }
 
 const DEFAULT_WOW_TBC_TROPHIES = [
@@ -16,41 +18,57 @@ const DEFAULT_WOW_TBC_TROPHIES = [
     name: "Top 1 Season 1 Karazhan",
     description: "Conquistou o 1 lugar no ranking da Season 1 de Karazhan.",
     icon: "/trofeus/1kara.png",
+    points: 100,
+    rarity: "Lendario",
   },
   {
     name: "Top 2 Season 1 Karazhan",
     description: "Conquistou o 2 lugar no ranking da Season 1 de Karazhan.",
     icon: "/trofeus/2kara.png",
+    points: 75,
+    rarity: "Epico",
   },
   {
     name: "Top 3 Season 1 Karazhan",
     description: "Conquistou o 3 lugar no ranking da Season 1 de Karazhan.",
     icon: "/trofeus/3kara.png",
+    points: 50,
+    rarity: "Raro",
   },
   {
     name: "Top 1 Season 1 Gruull/Mag",
     description: "Conquistou o 1 lugar no ranking da Season 1 de Gruull/Mag.",
     icon: "/trofeus/1mag.png",
+    points: 100,
+    rarity: "Lendario",
   },
   {
     name: "Top 2 Season 1 Gruull/Mag",
     description: "Conquistou o 2 lugar no ranking da Season 1 de Gruull/Mag.",
     icon: "/trofeus/2mag.png",
+    points: 75,
+    rarity: "Epico",
   },
   {
     name: "Top 3 Season 1 Gruull/Mag",
     description: "Conquistou o 3 lugar no ranking da Season 1 de Gruull/Mag.",
     icon: "/trofeus/3mag.png",
+    points: 50,
+    rarity: "Raro",
   },
   {
     name: "Entre os 5 melhores Gruul/Mag",
     description: "Terminou entre os 5 melhores membros em Gruul/Mag na Season 1.",
     icon: "/trofeus/1mag.png",
+    points: 25,
+    rarity: "Incomum",
   },
   {
     name: "Entre os 5 melhores Karazhan",
     description: "Terminou entre os 5 melhores membros em Karazhan na Season 1.",
     icon: "/trofeus/1kara.png",
+    points: 25,
+    rarity: "Incomum",
   },
 ];
 
@@ -114,6 +132,8 @@ export async function GET(request: NextRequest) {
           name: data.name || "Sem nome",
           description: data.description || "",
           icon: data.icon || "🏆",
+          points: typeof data.points === "number" ? data.points : 0,
+          rarity: data.rarity || "Comum",
           game: data.game || "wow-tbc",
         };
       })
@@ -175,10 +195,19 @@ export async function POST(request: NextRequest) {
     const name = body.name?.trim();
     const description = body.description?.trim();
     const icon = body.icon?.trim() || "🏆";
+    const points = Number.isFinite(body.points) ? Number(body.points) : 0;
+    const rarity = body.rarity?.trim() || "Comum";
 
     if (!name || !description) {
       return NextResponse.json(
         { error: "Name and description are required" },
+        { status: 400 }
+      );
+    }
+
+    if (points < 0) {
+      return NextResponse.json(
+        { error: "Points cannot be negative" },
         { status: 400 }
       );
     }
@@ -200,6 +229,8 @@ export async function POST(request: NextRequest) {
       name,
       description,
       icon,
+      points,
+      rarity,
       game: "wow-tbc",
       createdAt: FieldValue.serverTimestamp(),
       createdBy: authResult.decodedToken.uid,
@@ -212,6 +243,8 @@ export async function POST(request: NextRequest) {
         name,
         description,
         icon,
+        points,
+        rarity,
         game: "wow-tbc",
       },
     });
