@@ -51,7 +51,7 @@ function buildZoneTrophies(
   zoneName: "Karazhan" | "Gruul/Mag",
   topPrefix: "Karazhan" | "Gruull/Mag",
   ranking: RankingEntry[],
-  username: string
+  username: string | undefined
 ) {
   const normalizedUsername = normalizeUsername(username);
   const uniqueRanking = getUniqueMemberRanking(ranking).slice(0, 5);
@@ -107,7 +107,7 @@ export function mergeWowTbcTrophies(existingTrophies: Trophy[], derivedTrophies:
 }
 
 export function getWowTbcRankingTrophiesForUser(
-  username: string,
+  username: string | undefined,
   rankings: Record<number, RankingEntry[]>
 ) {
   return [
@@ -127,7 +127,7 @@ export function getWowTbcRankingTrophiesForUser(
 }
 
 export async function fetchWowTbcRankingTrophies(
-  username: string,
+  username: string | undefined,
   existingTrophies: Trophy[] = []
 ) {
   try {
