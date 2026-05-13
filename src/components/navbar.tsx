@@ -74,6 +74,10 @@ export default function Navbar() {
             Ranking
           </Link>
 
+          <Link href="/trofeus" className="hover:text-red-500 transition">
+            Trofeus
+          </Link>
+
           <a
             href="https://discord.gg/ADhrNMzmTn"
             target="_blank"
@@ -142,6 +146,10 @@ export default function Navbar() {
 
           <Link href="/ranking" onClick={() => setMenuOpen(false)}>
             Ranking
+          </Link>
+
+          <Link href="/trofeus" onClick={() => setMenuOpen(false)}>
+            Trofeus
           </Link>
 
           <a
