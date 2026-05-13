@@ -24,12 +24,12 @@ interface AdminTrophy {
 }
 
 const MEDAL_ICON_OPTIONS = [
-  { label: "1 Karazhan", value: "/medalhas/1kara.png" },
-  { label: "2 Karazhan", value: "/medalhas/2kara.png" },
-  { label: "3 Karazhan", value: "/medalhas/3kara.png" },
-  { label: "1 Gruul/Mag", value: "/medalhas/1mag.png" },
-  { label: "2 Gruul/Mag", value: "/medalhas/2mag.png" },
-  { label: "3 Gruul/Mag", value: "/medalhas/3mag.png" },
+  { label: "1 Karazhan", value: "/trofeus/1kara.png" },
+  { label: "2 Karazhan", value: "/trofeus/2kara.png" },
+  { label: "3 Karazhan", value: "/trofeus/3kara.png" },
+  { label: "1 Gruul/Mag", value: "/trofeus/1mag.png" },
+  { label: "2 Gruul/Mag", value: "/trofeus/2mag.png" },
+  { label: "3 Gruul/Mag", value: "/trofeus/3mag.png" },
 ];
 
 export default function AdminTrofeusPage() {
