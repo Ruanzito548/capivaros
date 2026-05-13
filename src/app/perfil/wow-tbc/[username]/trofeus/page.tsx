@@ -5,10 +5,7 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import {
-  fetchWowTbcRankingTrophies,
-  Trophy,
-} from "@/lib/wow-tbc-trophies";
+import { getGameTrophies, Trophy } from "@/lib/trophies";
 
 interface WowTrophyProfileUserData {
   username?: string;
@@ -43,12 +40,7 @@ export default function PerfilWowTrofeusPage() {
       }
 
       setUserData(user);
-      setTrophies(
-        await fetchWowTbcRankingTrophies(
-          user.username,
-          user.trophies?.["wow-tbc"] || []
-        )
-      );
+      setTrophies(getGameTrophies(user.trophies, "wow-tbc"));
       setLoading(false);
     };
 
@@ -84,7 +76,7 @@ export default function PerfilWowTrofeusPage() {
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-gray-300/80">
-            Conquistas do jogador no ranking de membros em Karazhan e Gruul/Mag.
+            Trofeus cadastrados manualmente para este jogador.
           </p>
         </div>
 
@@ -111,7 +103,7 @@ export default function PerfilWowTrofeusPage() {
           </div>
         ) : (
           <div className="mt-10 rounded-2xl border border-red-900/30 bg-[#111]/80 p-8 text-center text-gray-400">
-            Este jogador ainda nao possui trofeus ativos nesses rankings.
+            Este jogador ainda nao possui trofeus cadastrados.
           </div>
         )}
 

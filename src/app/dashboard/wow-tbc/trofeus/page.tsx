@@ -5,10 +5,7 @@ import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import {
-  fetchWowTbcRankingTrophies,
-  Trophy,
-} from "@/lib/wow-tbc-trophies";
+import { getGameTrophies, Trophy } from "@/lib/trophies";
 
 export default function TrofeusPage() {
   const [trophies, setTrophies] = useState<Trophy[]>([]);
@@ -30,12 +27,7 @@ export default function TrofeusPage() {
         return;
       }
 
-      setTrophies(
-        await fetchWowTbcRankingTrophies(
-          data.username,
-          data.trophies?.["wow-tbc"] || []
-        )
-      );
+      setTrophies(getGameTrophies(data.trophies, "wow-tbc"));
       setLoading(false);
     });
 
@@ -63,7 +55,7 @@ export default function TrofeusPage() {
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-gray-300/80">
-            Seus trofeus sao calculados a partir do ranking de membros em Karazhan e Gruul/Mag.
+            Seus trofeus salvos no perfil da guilda aparecem aqui.
           </p>
         </div>
 
@@ -90,7 +82,7 @@ export default function TrofeusPage() {
           </div>
         ) : (
           <div className="mt-10 rounded-2xl border border-red-900/30 bg-[#111]/80 p-8 text-center text-gray-400">
-            Voce ainda nao possui trofeus ativos nesses rankings.
+            Voce ainda nao possui trofeus cadastrados.
           </div>
         )}
       </div>

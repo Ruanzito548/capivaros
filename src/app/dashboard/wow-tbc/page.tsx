@@ -6,10 +6,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { getRoleLabel } from "@/lib/permissions";
-import {
-  fetchWowTbcRankingTrophies,
-  Trophy,
-} from "@/lib/wow-tbc-trophies";
+import { getGameTrophies, Trophy } from "@/lib/trophies";
 
 interface WowDashboardUserData {
   username?: string;
@@ -54,12 +51,7 @@ export default function DashboardWOWTBC() {
         photoURL: data.photoURL || "/capilogo.png",
         coverURL: data.coverURL,
       });
-      setTrophies(
-        await fetchWowTbcRankingTrophies(
-          data.username,
-          data.trophies?.["wow-tbc"] || []
-        )
-      );
+      setTrophies(getGameTrophies(data.trophies, "wow-tbc"));
 
       setLoading(false);
     });
@@ -104,12 +96,7 @@ export default function DashboardWOWTBC() {
       photoURL: data?.photoURL || "/capilogo.png",
       coverURL: data?.coverURL || "/capa.jpg",
     });
-    setTrophies(
-      await fetchWowTbcRankingTrophies(
-        data?.username || "",
-        data?.trophies?.["wow-tbc"] || []
-      )
-    );
+    setTrophies(getGameTrophies(data?.trophies, "wow-tbc"));
   };
 
   if (loading || !userData) {

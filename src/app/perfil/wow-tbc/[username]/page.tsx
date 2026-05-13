@@ -5,10 +5,7 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import {
-  fetchWowTbcRankingTrophies,
-  Trophy,
-} from "@/lib/wow-tbc-trophies";
+import { getGameTrophies, Trophy } from "@/lib/trophies";
 
 interface WowProfileUserData {
   username?: string;
@@ -53,12 +50,7 @@ export default function PerfilWOW() {
       }
 
       setUserData(user);
-      setTrophies(
-        await fetchWowTbcRankingTrophies(
-          user.username,
-          user.trophies?.["wow-tbc"] || []
-        )
-      );
+      setTrophies(getGameTrophies(user.trophies, "wow-tbc"));
       setLoading(false);
 
     };
