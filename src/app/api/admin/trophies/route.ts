@@ -11,7 +11,41 @@ interface TrophyPayload {
   icon?: string;
   points?: number;
   rarity?: string;
+  applySeason1TestValues?: boolean;
 }
+
+const SEASON1_TEST_VALUES = [
+  {
+    name: "Top 1 Season 1 Karazhan",
+    points: 20,
+    rarity: "Lendario",
+  },
+  {
+    name: "Top 2 Season 1 Karazhan",
+    points: 10,
+    rarity: "Epico",
+  },
+  {
+    name: "Top 3 Season 1 Karazhan",
+    points: 5,
+    rarity: "Epico",
+  },
+  {
+    name: "Top 1 Season 1 Gruull/Mag",
+    points: 20,
+    rarity: "Lendario",
+  },
+  {
+    name: "Top 2 Season 1 Gruull/Mag",
+    points: 10,
+    rarity: "Epico",
+  },
+  {
+    name: "Top 3 Season 1 Gruull/Mag",
+    points: 5,
+    rarity: "Epico",
+  },
+];
 
 const DEFAULT_WOW_TBC_TROPHIES = [
   {
@@ -162,6 +196,44 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = (await request.json()) as TrophyPayload & { seedDefaults?: boolean };
+
+    if (body.applySeason1TestValues) {
+      const updateResults = await Promise.all(
+        SEASON1_TEST_VALUES.map(async (trophy) => {
+          const snapshot = await adminDb
+            .collection("trophies")
+            .where("game", "==", "wow-tbc")
+            .where("name", "==", trophy.name)
+            .limit(1)
+            .get();
+
+          if (snapshot.empty) {
+            return { name: trophy.name, updated: false };
+          }
+
+          const targetDoc = snapshot.docs[0];
+          await targetDoc.ref.update({
+            points: trophy.points,
+            rarity: trophy.rarity,
+            updatedAt: FieldValue.serverTimestamp(),
+            updatedBy: authResult.decodedToken.uid,
+          });
+
+          return { name: trophy.name, updated: true };
+        })
+      );
+
+      const updated = updateResults.filter((result) => result.updated).length;
+      const missing = updateResults
+        .filter((result) => !result.updated)
+        .map((result) => result.name);
+
+      return NextResponse.json({
+        success: true,
+        updated,
+        missing,
+      });
+    }
 
     if (body.seedDefaults) {
       const existingSnapshot = await adminDb

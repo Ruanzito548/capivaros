@@ -51,6 +51,7 @@ export default function AdminTrofeusPage() {
   const [creating, setCreating] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [applyingSeason1TestValues, setApplyingSeason1TestValues] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [icon, setIcon] = useState(MEDAL_ICON_OPTIONS[0].value);
@@ -249,6 +250,48 @@ export default function AdminTrofeusPage() {
     }
   };
 
+  const handleApplySeason1TestValues = async () => {
+    try {
+      setApplyingSeason1TestValues(true);
+      const token = await getToken();
+      const response = await fetch("/api/admin/trophies", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          applySeason1TestValues: true,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Erro ao aplicar pontos/raridade de teste.");
+      }
+
+      const data = (await response.json()) as { updated?: number; missing?: string[] };
+      await fetchTrophies();
+
+      if (data.missing && data.missing.length > 0) {
+        alert(
+          `${data.updated ?? 0} trofeus atualizados. Nao encontrados: ${data.missing.join(", ")}`
+        );
+        return;
+      }
+
+      alert(`${data.updated ?? 0} trofeus atualizados com pontos/raridade de teste.`);
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Erro ao aplicar pontos/raridade de teste."
+      );
+    } finally {
+      setApplyingSeason1TestValues(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-transparent text-white">
@@ -278,13 +321,25 @@ export default function AdminTrofeusPage() {
             </p>
           </div>
 
-          <button
-            onClick={handleSeedDefaults}
-            disabled={seeding}
-            className="rounded-lg bg-yellow-700 px-5 py-3 hover:bg-yellow-800 disabled:opacity-60"
-          >
-            {seeding ? "Criando trofeus base..." : "Criar 8 trofeus base"}
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={handleApplySeason1TestValues}
+              disabled={applyingSeason1TestValues}
+              className="rounded-lg bg-blue-700 px-5 py-3 hover:bg-blue-800 disabled:opacity-60"
+            >
+              {applyingSeason1TestValues
+                ? "Aplicando pontos/raridade..."
+                : "Aplicar pontos/raridade teste S1"}
+            </button>
+
+            <button
+              onClick={handleSeedDefaults}
+              disabled={seeding}
+              className="rounded-lg bg-yellow-700 px-5 py-3 hover:bg-yellow-800 disabled:opacity-60"
+            >
+              {seeding ? "Criando trofeus base..." : "Criar 8 trofeus base"}
+            </button>
+          </div>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-2">
