@@ -151,7 +151,7 @@ export default function PerfilWOW() {
           {/* TROFÉUS */}
 
           <Link
-            href={`/dashboard/wow-tbc/trofeus`}
+            href={`/perfil/wow-tbc/${username}/trofeus`}
             className="bg-[#141414] border border-red-900 rounded-2xl p-8 text-left hover:bg-red-900/40 transition shadow-[0_0_20px_rgba(255,0,0,0.25)] hover:shadow-[0_0_35px_rgba(255,0,0,0.6)]"
           >
 
