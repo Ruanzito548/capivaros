@@ -5,12 +5,29 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import {
+  fetchWowTbcRankingTrophies,
+  Trophy,
+} from "@/lib/wow-tbc-trophies";
+
+interface WowProfileUserData {
+  username?: string;
+  photoURL?: string;
+  coverURL?: string;
+  trophies?: Record<string, Trophy[]>;
+  applications?: {
+    "wow-tbc"?: {
+      mainCharacter?: string;
+    };
+  };
+}
 
 export default function PerfilWOW() {
 
   const { username } = useParams() as { username: string };
 
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<WowProfileUserData | null>(null);
+  const [trophies, setTrophies] = useState<Trophy[]>([]);
   const [loading, setLoading] = useState(true);
 
   const normalizedUsername =
@@ -25,7 +42,7 @@ export default function PerfilWOW() {
       const user = snap.docs
         .map(doc => doc.data())
         .find(
-          (u: any) =>
+          (u): u is WowProfileUserData =>
             typeof u?.username === "string" &&
             u.username.toLowerCase() === normalizedUsername
         );
@@ -36,6 +53,12 @@ export default function PerfilWOW() {
       }
 
       setUserData(user);
+      setTrophies(
+        await fetchWowTbcRankingTrophies(
+          user.username,
+          user.trophies?.["wow-tbc"] || []
+        )
+      );
       setLoading(false);
 
     };
@@ -63,10 +86,6 @@ export default function PerfilWOW() {
     );
 
   }
-
-  const characters = userData.characters || [];
-  const trophies = userData.trophies?.["wow-tbc"] || [];
-  const mainCharacter = userData.applications?.["wow-tbc"]?.mainCharacter;
 
   return (
 
@@ -166,7 +185,7 @@ export default function PerfilWOW() {
 
             <div className="grid md:grid-cols-4 gap-6">
 
-              {trophies.map((trophy: any, index: number) => (
+              {trophies.map((trophy, index) => (
 
                 <div
                   key={index}

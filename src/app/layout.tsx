@@ -3,8 +3,13 @@ import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 
 export const metadata = {
-  title: "Capivaros Templários",
-  description: "União. Disciplina. Domínio.",
+  title: "Capivaros Templarios",
+  description: "Uniao. Disciplina. Dominio.",
+  icons: {
+    icon: "/capilogo.png",
+    shortcut: "/capilogo.png",
+    apple: "/capilogo.png",
+  },
 };
 
 export default function RootLayout({

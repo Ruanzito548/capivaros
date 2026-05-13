@@ -5,13 +5,37 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  fetchWowTbcRankingTrophies,
+  Trophy,
+} from "@/lib/wow-tbc-trophies";
+
+interface UserProfileData {
+  username?: string;
+  role?: string;
+  photoURL?: string;
+  coverURL?: string;
+  characters?: unknown[];
+  trophies?: Record<string, Trophy[]>;
+  applications?: {
+    "wow-tbc"?: {
+      status?: string;
+      mainCharacter?: string;
+    };
+    "lol"?: {
+      status?: string;
+      riotId?: string;
+    };
+  };
+}
 
 export default function PerfilUser() {
 
   const { username } = useParams() as { username: string };
   const router = useRouter();
 
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<UserProfileData | null>(null);
+  const [trophies, setTrophies] = useState<Trophy[]>([]);
   const [loading, setLoading] = useState(true);
 
   const normalizedUsername =
@@ -26,7 +50,7 @@ export default function PerfilUser() {
       const user = snap.docs
         .map(doc => doc.data())
         .find(
-          (u: any) =>
+          (u): u is UserProfileData =>
             typeof u?.username === "string" &&
             u.username.toLowerCase() === normalizedUsername
         );
@@ -37,6 +61,12 @@ export default function PerfilUser() {
       }
 
       setUserData(user);
+      setTrophies(
+        await fetchWowTbcRankingTrophies(
+          user.username,
+          user.trophies?.["wow-tbc"] || []
+        )
+      );
       setLoading(false);
 
     };
@@ -69,7 +99,6 @@ export default function PerfilUser() {
   const lolApproved = userData.applications?.["lol"]?.status === "approved";
 
   const characters = userData.characters || [];
-  const trophies = userData.trophies?.["wow-tbc"] || [];
   const mainCharacter = userData.applications?.["wow-tbc"]?.mainCharacter;
   const riotId = userData.applications?.["lol"]?.riotId;
 
@@ -213,7 +242,7 @@ export default function PerfilUser() {
 
             <div className="grid md:grid-cols-4 gap-6">
 
-              {trophies.map((trophy: any, index: number) => (
+              {trophies.map((trophy, index) => (
 
                 <div
                   key={index}

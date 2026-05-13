@@ -6,6 +6,10 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { getRoleLabel } from "@/lib/permissions";
+import {
+  fetchWowTbcRankingTrophies,
+  Trophy,
+} from "@/lib/wow-tbc-trophies";
 
 interface WowDashboardUserData {
   username?: string;
@@ -18,10 +22,12 @@ interface ActionCardProps {
   title: string;
   description: string;
   onClick: () => void;
+  footer?: string;
 }
 
 export default function DashboardWOWTBC() {
   const [userData, setUserData] = useState<WowDashboardUserData | null>(null);
+  const [trophies, setTrophies] = useState<Trophy[]>([]);
   const [loading, setLoading] = useState(true);
   const [mainCharacter, setMainCharacter] = useState("");
 
@@ -48,6 +54,12 @@ export default function DashboardWOWTBC() {
         photoURL: data.photoURL || "/capilogo.png",
         coverURL: data.coverURL,
       });
+      setTrophies(
+        await fetchWowTbcRankingTrophies(
+          data.username,
+          data.trophies?.["wow-tbc"] || []
+        )
+      );
 
       setLoading(false);
     });
@@ -92,6 +104,12 @@ export default function DashboardWOWTBC() {
       photoURL: data?.photoURL || "/capilogo.png",
       coverURL: data?.coverURL || "/capa.jpg",
     });
+    setTrophies(
+      await fetchWowTbcRankingTrophies(
+        data?.username || "",
+        data?.trophies?.["wow-tbc"] || []
+      )
+    );
   };
 
   if (loading || !userData) {
@@ -173,8 +191,38 @@ export default function DashboardWOWTBC() {
             title="Trofeus"
             description="Acompanhe suas conquistas."
             onClick={() => router.push("/dashboard/wow-tbc/trofeus")}
+            footer={`${trophies.length} trofeus desbloqueados`}
           />
         </div>
+
+        {trophies.length > 0 && (
+          <div className="mt-20">
+            <h2 className="mb-6 text-center text-3xl text-red-400">
+              Trofeus do WoW TBC
+            </h2>
+
+            <div className="grid gap-6 md:grid-cols-4">
+              {trophies.map((trophy, index) => (
+                <div
+                  key={`${trophy.name}-${index}`}
+                  className="rounded-xl border border-red-900 bg-[#111] p-6 text-center shadow-[0_0_10px_rgba(255,0,0,0.2)]"
+                >
+                  <div className="mb-3 text-4xl">
+                    {trophy.icon || "🏆"}
+                  </div>
+
+                  <p className="font-semibold text-red-400">
+                    {trophy.name}
+                  </p>
+
+                  <p className="mt-2 text-sm text-gray-500">
+                    {trophy.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mt-16 text-center pb-20">
           <button
@@ -189,7 +237,7 @@ export default function DashboardWOWTBC() {
   );
 }
 
-function ActionCard({ title, description, onClick }: ActionCardProps) {
+function ActionCard({ title, description, onClick, footer }: ActionCardProps) {
   return (
     <button
       onClick={onClick}
@@ -202,6 +250,12 @@ function ActionCard({ title, description, onClick }: ActionCardProps) {
       <p className="text-gray-400">
         {description}
       </p>
+
+      {footer ? (
+        <div className="mt-4 text-sm text-yellow-400">
+          {footer}
+        </div>
+      ) : null}
     </button>
   );
 }
