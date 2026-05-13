@@ -36,7 +36,7 @@ export default function AdminTrofeusPage() {
   const [icon, setIcon] = useState("🏆");
   const router = useRouter();
 
-  const getToken = async () => {
+  const getToken = useCallback(async () => {
     const currentUser = auth.currentUser;
 
     if (!currentUser) {
@@ -45,7 +45,7 @@ export default function AdminTrofeusPage() {
     }
 
     return currentUser.getIdToken();
-  };
+  }, [router]);
 
   const fetchUsers = useCallback(async () => {
     const token = await getToken();
@@ -66,7 +66,7 @@ export default function AdminTrofeusPage() {
     if (!selectedUserId && data.length > 0) {
       setSelectedUserId(data[0].id);
     }
-  }, [selectedUserId, router]);
+  }, [getToken, selectedUserId]);
 
   const fetchTrophies = useCallback(async () => {
     const token = await getToken();
@@ -87,7 +87,7 @@ export default function AdminTrofeusPage() {
     if (!selectedTrophyId && data.length > 0) {
       setSelectedTrophyId(data[0].id);
     }
-  }, [selectedTrophyId, router]);
+  }, [getToken, selectedTrophyId]);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
