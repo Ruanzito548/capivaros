@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
+import { Trophy } from "@/lib/trophies";
 
 export const runtime = "nodejs";
 
@@ -10,6 +11,7 @@ interface MemberResponse {
   username: string;
   role: string;
   photoURL?: string;
+  trophies?: Trophy[];
 }
 
 function isApprovedForGame(
@@ -38,6 +40,9 @@ function serializeMember(
     username: data.username,
     role: data.role ?? "member",
     photoURL: data.photoURL ?? "",
+    trophies: Array.isArray(data.trophies?.["wow-tbc"])
+      ? data.trophies["wow-tbc"]
+      : [],
   };
 }
 

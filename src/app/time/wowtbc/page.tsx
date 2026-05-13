@@ -3,12 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getRoleLabel, isFounder, isOfficerTBC } from "@/lib/permissions";
+import { Trophy } from "@/lib/trophies";
+import TrophyIcon from "@/components/trophy-icon";
 
 interface Member {
   id: string;
   username: string;
   role?: string;
   photoURL?: string;
+  trophies?: Trophy[];
 }
 
 const ADMIN_ROLES = new Set(["admin", "fundador", "officer", "officer tbc"]);
@@ -100,9 +103,9 @@ export default function WowTbcPage() {
               key={member.id}
               member={member}
               onClick={() =>
-                  router.push(`/perfil/wow-tbc/${member.username.toLowerCase()}`)
-                }
-              />
+                router.push(`/perfil/wow-tbc/${member.username.toLowerCase()}`)
+              }
+            />
           ))}
         </div>
       </section>
@@ -125,8 +128,8 @@ function MemberCard({
     member.photoURL && member.photoURL.trim() !== ""
       ? member.photoURL
       : "/capilogo.png";
-
   const role = (member.role ?? "").toLowerCase();
+  const trophies = Array.isArray(member.trophies) ? member.trophies.slice(0, 3) : [];
 
   return (
     <div
@@ -158,6 +161,38 @@ function MemberCard({
       >
         {getRoleLabel(member.role ?? "member")}
       </span>
+
+      {trophies.length > 0 && (
+        <div
+          className="mt-5 flex flex-wrap justify-center gap-3"
+          onClick={(event) => event.stopPropagation()}
+        >
+          {trophies.map((trophy, index) => (
+            <div
+              key={`${trophy.name}-${index}`}
+              className="group relative"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-red-700/70 bg-black/40 p-2 shadow-[0_0_12px_rgba(255,0,0,0.18)]">
+                <TrophyIcon
+                  icon={trophy.icon}
+                  alt={trophy.name}
+                  className="h-8 w-8"
+                />
+              </div>
+
+              <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-3 hidden w-52 -translate-x-1/2 rounded-xl border border-red-900/70 bg-[#0d0d0d] px-3 py-2 text-left shadow-[0_0_24px_rgba(0,0,0,0.45)] group-hover:block">
+                <p className="text-sm font-semibold text-red-300">
+                  {trophy.name}
+                </p>
+
+                <p className="mt-1 text-xs leading-5 text-gray-300">
+                  {trophy.description}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
