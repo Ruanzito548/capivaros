@@ -75,7 +75,7 @@ export default function Navbar() {
           </Link>
 
           <Link href="/trofeus" className="hover:text-red-500 transition">
-            Trofeus
+            Medalhas
           </Link>
 
           <a
@@ -149,7 +149,7 @@ export default function Navbar() {
           </Link>
 
           <Link href="/trofeus" onClick={() => setMenuOpen(false)}>
-            Trofeus
+            Medalhas
           </Link>
 
           <a
