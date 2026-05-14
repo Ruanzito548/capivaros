@@ -52,6 +52,13 @@ export default function AdminTrofeusPage() {
   const [assigning, setAssigning] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [applyingSeason1TestValues, setApplyingSeason1TestValues] = useState(false);
+  const [editingTrophyId, setEditingTrophyId] = useState<string | null>(null);
+  const [editingTrophyName, setEditingTrophyName] = useState("");
+  const [editingTrophyDescription, setEditingTrophyDescription] = useState("");
+  const [editingTrophyIcon, setEditingTrophyIcon] = useState(MEDAL_ICON_OPTIONS[0].value);
+  const [editingTrophyPoints, setEditingTrophyPoints] = useState("0");
+  const [editingTrophyRarity, setEditingTrophyRarity] = useState("Comum");
+  const [savingTrophyId, setSavingTrophyId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [icon, setIcon] = useState(MEDAL_ICON_OPTIONS[0].value);
@@ -292,6 +299,64 @@ export default function AdminTrofeusPage() {
     }
   };
 
+  const startEditingTrophy = (trophy: AdminTrophy) => {
+    setEditingTrophyId(trophy.id);
+    setEditingTrophyName(trophy.name);
+    setEditingTrophyDescription(trophy.description);
+    setEditingTrophyIcon(trophy.icon || MEDAL_ICON_OPTIONS[0].value);
+    setEditingTrophyPoints(String(trophy.points));
+    setEditingTrophyRarity(trophy.rarity || "Comum");
+  };
+
+  const cancelEditingTrophy = () => {
+    setEditingTrophyId(null);
+    setEditingTrophyName("");
+    setEditingTrophyDescription("");
+    setEditingTrophyIcon(MEDAL_ICON_OPTIONS[0].value);
+    setEditingTrophyPoints("0");
+    setEditingTrophyRarity("Comum");
+  };
+
+  const handleUpdateTrophy = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!editingTrophyId) {
+      return;
+    }
+
+    try {
+      setSavingTrophyId(editingTrophyId);
+      const token = await getToken();
+      const response = await fetch(`/api/admin/trophies/${editingTrophyId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: editingTrophyName,
+          description: editingTrophyDescription,
+          icon: editingTrophyIcon,
+          points: Number(editingTrophyPoints),
+          rarity: editingTrophyRarity,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Erro ao atualizar trofeu.");
+      }
+
+      await fetchTrophies();
+      cancelEditingTrophy();
+      alert("Trofeu atualizado com sucesso.");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Erro ao atualizar trofeu.");
+    } finally {
+      setSavingTrophyId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-transparent text-white">
@@ -510,26 +575,152 @@ export default function AdminTrofeusPage() {
                   key={trophy.id}
                   className="rounded-xl border border-red-900/60 bg-black/20 p-5"
                 >
-                  <div className="mb-3 flex justify-center">
-                    <TrophyIcon
-                      icon={trophy.icon}
-                      alt={trophy.name}
-                      className="h-16 w-16"
-                    />
-                  </div>
+                  {editingTrophyId === trophy.id ? (
+                    <form onSubmit={handleUpdateTrophy} className="space-y-4">
+                      <div className="flex justify-center">
+                        <TrophyIcon
+                          icon={editingTrophyIcon}
+                          alt={editingTrophyName || trophy.name}
+                          className="h-16 w-16"
+                        />
+                      </div>
 
-                  <p className="font-semibold text-red-400">
-                    {trophy.name}
-                  </p>
+                      <label className="block text-sm text-gray-300">
+                        Nome
+                        <input
+                          value={editingTrophyName}
+                          onChange={(event) => setEditingTrophyName(event.target.value)}
+                          className="mt-2 w-full rounded-lg border border-red-900 bg-[#1b1b1b] p-3 text-white"
+                          required
+                        />
+                      </label>
 
-                  <p className="mt-2 text-sm text-gray-400">
-                    {trophy.description}
-                  </p>
+                      <label className="block text-sm text-gray-300">
+                        Descricao
+                        <textarea
+                          value={editingTrophyDescription}
+                          onChange={(event) => setEditingTrophyDescription(event.target.value)}
+                          className="mt-2 min-h-24 w-full rounded-lg border border-red-900 bg-[#1b1b1b] p-3 text-white"
+                          required
+                        />
+                      </label>
 
-                  <div className="mt-4 flex items-center justify-between text-xs text-gray-300">
-                    <span>{trophy.points} pts</span>
-                    <span>{trophy.rarity}</span>
-                  </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <label className="block text-sm text-gray-300">
+                          Pontos
+                          <input
+                            type="number"
+                            min="0"
+                            value={editingTrophyPoints}
+                            onChange={(event) => setEditingTrophyPoints(event.target.value)}
+                            className="mt-2 w-full rounded-lg border border-red-900 bg-[#1b1b1b] p-3 text-white"
+                            required
+                          />
+                        </label>
+
+                        <label className="block text-sm text-gray-300">
+                          Raridade
+                          <select
+                            value={editingTrophyRarity}
+                            onChange={(event) => setEditingTrophyRarity(event.target.value)}
+                            className="mt-2 w-full rounded-lg border border-red-900 bg-[#1b1b1b] p-3 text-white"
+                          >
+                            {RARITY_OPTIONS.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+
+                      <div>
+                        <p className="mb-3 text-sm text-gray-300">
+                          Icone
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          {MEDAL_ICON_OPTIONS.map((option) => {
+                            const isSelected = editingTrophyIcon === option.value;
+
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => setEditingTrophyIcon(option.value)}
+                                className={`rounded-xl border p-3 text-center transition ${
+                                  isSelected
+                                    ? "border-red-500 bg-red-900/30"
+                                    : "border-red-900 bg-[#1b1b1b] hover:border-red-700"
+                                }`}
+                              >
+                                <div className="mb-2 flex justify-center">
+                                  <TrophyIcon
+                                    icon={option.value}
+                                    alt={option.label}
+                                    className="h-10 w-10"
+                                  />
+                                </div>
+
+                                <div className="text-xs text-gray-300">
+                                  {option.label}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button
+                          type="submit"
+                          disabled={savingTrophyId === trophy.id}
+                          className="rounded-lg bg-red-700 px-4 py-2 hover:bg-red-800 disabled:opacity-60"
+                        >
+                          {savingTrophyId === trophy.id ? "Salvando..." : "Salvar"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={cancelEditingTrophy}
+                          className="rounded-lg border border-red-900 px-4 py-2 text-gray-200 hover:border-red-700"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <div className="mb-3 flex justify-center">
+                        <TrophyIcon
+                          icon={trophy.icon}
+                          alt={trophy.name}
+                          className="h-16 w-16"
+                        />
+                      </div>
+
+                      <p className="font-semibold text-red-400">
+                        {trophy.name}
+                      </p>
+
+                      <p className="mt-2 text-sm text-gray-400">
+                        {trophy.description}
+                      </p>
+
+                      <div className="mt-4 flex items-center justify-between text-xs text-gray-300">
+                        <span>{trophy.points} pts</span>
+                        <span>{trophy.rarity}</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => startEditingTrophy(trophy)}
+                        className="mt-4 rounded-lg border border-red-900 px-4 py-2 text-sm text-gray-200 hover:border-red-700 hover:bg-red-900/20"
+                      >
+                        Editar
+                      </button>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
