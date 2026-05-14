@@ -127,7 +127,7 @@ export default function TrofeusPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-transparent px-6 py-20 text-red-500 flex items-center justify-center">
-        Carregando trofeus...
+        Carregando medalhas...
       </div>
     );
   }
@@ -140,11 +140,11 @@ export default function TrofeusPage() {
       <div className="relative mx-auto max-w-6xl">
         <div className="mb-14 rounded-3xl border border-red-900/50 bg-[#0e0e0e]/80 p-8 text-center shadow-[0_0_35px_rgba(255,0,0,0.14)] backdrop-blur-sm">
           <h1 className="text-5xl font-bold text-red-500 drop-shadow-[0_0_15px_rgba(255,0,0,0.8)] md:text-6xl">
-            Ranking de Trofeus
+            Ranking de Medalhas
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-lg text-gray-300">
-            Os jogadores abaixo aparecem ranqueados por quantidade de trofeus e pontos acumulados.
+            Os jogadores abaixo aparecem ranqueados por quantidade de medalhas e pontos acumulados.
           </p>
 
           <div className="mt-6 inline-flex items-center gap-4 rounded-full border border-red-900/70 bg-black/40 px-5 py-2 text-sm text-red-200">
@@ -186,7 +186,7 @@ export default function TrofeusPage() {
                   </h2>
 
                   <p className="mt-2 text-sm text-gray-300">
-                    {player.trophies.length} trofeus
+                    {player.trophies.length} medalhas
                   </p>
 
                   <p className="mt-1 text-sm font-semibold text-yellow-300">
@@ -263,7 +263,7 @@ export default function TrofeusPage() {
                       </h2>
 
                       <p className="mt-1 text-sm text-gray-400">
-                        {player.trophies.length} trofeus • {player.totalPoints} pontos
+                        {player.trophies.length} medalhas • {player.totalPoints} pontos
                       </p>
                     </div>
                   </div>
@@ -312,7 +312,7 @@ export default function TrofeusPage() {
           </>
         ) : (
           <div className="rounded-2xl border border-red-900/40 bg-[#111] p-10 text-center text-gray-400">
-            Nenhum jogador com trofeus ainda.
+            Nenhum jogador com medalhas ainda.
           </div>
         )}
       </div>
