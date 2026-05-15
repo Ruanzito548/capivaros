@@ -184,6 +184,7 @@ export default function PerfilWOW() {
                     : createEmptyAvailability()
                 }
                 readonly
+                enableReadonlyDetails
               />
             </div>
           )}

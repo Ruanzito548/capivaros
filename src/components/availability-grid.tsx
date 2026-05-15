@@ -74,13 +74,24 @@ interface Props {
   value: Availability;
   onChange?: (next: Availability) => void;
   readonly?: boolean;
+  enableReadonlyDetails?: boolean;
 }
 
-export default function AvailabilityGrid({ value, onChange, readonly = false }: Props) {
+export default function AvailabilityGrid({
+  value,
+  onChange,
+  readonly = false,
+  enableReadonlyDetails = false,
+}: Props) {
   const [editor, setEditor] = useState<{
     dayIndex: number;
     periodIndex: number;
     draftHours: boolean[];
+  } | null>(null);
+  const [viewer, setViewer] = useState<{
+    dayIndex: number;
+    periodIndex: number;
+    hours: boolean[];
   } | null>(null);
 
   const openEditor = (d: number, p: number) => {
@@ -90,6 +101,16 @@ export default function AvailabilityGrid({ value, onChange, readonly = false }: 
       dayIndex: d,
       periodIndex: p,
       draftHours: [...currentHours],
+    });
+  };
+
+  const openReadonlyViewer = (d: number, p: number) => {
+    if (!readonly || !enableReadonlyDetails) return;
+    const currentHours = value[d]?.[p] ?? createEmptyPeriodHours();
+    setViewer({
+      dayIndex: d,
+      periodIndex: p,
+      hours: [...currentHours],
     });
   };
 
@@ -157,16 +178,24 @@ export default function AvailabilityGrid({ value, onChange, readonly = false }: 
                 const selectedHours = value[d]?.[p] ?? createEmptyPeriodHours();
                 const selectedCount = selectedHours.filter(Boolean).length;
                 const active = selectedCount > 0;
+                const canClick = !readonly || enableReadonlyDetails;
                 return (
                   <td key={d} className="py-2 px-1 text-center align-middle">
                     <button
                       type="button"
                       aria-label={`${DAYS[d]} ${period.label} ${active ? "disponível" : "indisponível"}`}
-                      onClick={() => openEditor(d, p)}
-                      disabled={readonly}
+                      onClick={() => {
+                        if (readonly) {
+                          openReadonlyViewer(d, p);
+                          return;
+                        }
+
+                        openEditor(d, p);
+                      }}
+                      disabled={!canClick}
                       className={[
                         "mx-auto flex h-9 w-9 items-center justify-center rounded-md border text-sm transition-all duration-150 sm:h-10 sm:w-10 sm:text-base md:h-12 md:w-12 md:text-lg",
-                        readonly ? "cursor-default" : "cursor-pointer",
+                        canClick ? "cursor-pointer" : "cursor-default",
                         active
                           ? "border-red-600 bg-red-600/30 shadow-[0_0_8px_rgba(220,38,38,0.5)]"
                           : "border-red-900/40 bg-[#1c1c1c] hover:border-red-700 hover:bg-red-900/10",
@@ -193,6 +222,12 @@ export default function AvailabilityGrid({ value, onChange, readonly = false }: 
       {!readonly && (
         <p className="mt-3 text-xs text-gray-500">
           Clique no quadrado do período para escolher os horários exatos.
+        </p>
+      )}
+
+      {readonly && enableReadonlyDetails && (
+        <p className="mt-3 text-xs text-gray-500">
+          Clique no quadrado do período para ver os horários selecionados.
         </p>
       )}
 
@@ -260,6 +295,50 @@ export default function AvailabilityGrid({ value, onChange, readonly = false }: 
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
               >
                 Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {readonly && enableReadonlyDetails && viewer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-red-900 bg-[#141414] p-6 shadow-[0_0_25px_rgba(220,38,38,0.35)]">
+            <h3 className="text-xl font-bold text-red-400">
+              {DAYS[viewer.dayIndex]} - {PERIODS[viewer.periodIndex].label}
+            </h3>
+            <p className="mt-1 text-sm text-gray-400">
+              Horários selecionados pelo jogador.
+            </p>
+
+            <div className="mt-5 grid grid-cols-3 gap-3">
+              {PERIODS[viewer.periodIndex].slots.map((hour, hourIndex) => {
+                const selected = viewer.hours[hourIndex] ?? false;
+                const hourLabel = `${String(hour).padStart(2, "0")}:00`;
+
+                return (
+                  <div
+                    key={`${hourLabel}-${hourIndex}`}
+                    className={[
+                      "rounded-lg border px-3 py-2 text-center text-sm font-semibold",
+                      selected
+                        ? "border-red-500 bg-red-600/30 text-white"
+                        : "border-red-900/50 bg-[#1c1c1c] text-gray-500",
+                    ].join(" ")}
+                  >
+                    {hourLabel}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setViewer(null)}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+              >
+                Fechar
               </button>
             </div>
           </div>
