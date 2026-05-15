@@ -7,12 +7,14 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getGameTrophies, Trophy } from "@/lib/trophies";
 import TrophyIcon from "@/components/trophy-icon";
+import AvailabilityGrid, { flatToAvailability, createEmptyAvailability } from "@/components/availability-grid";
 
 interface WowProfileUserData {
   username?: string;
   photoURL?: string;
   coverURL?: string;
   trophies?: Record<string, Trophy[]>;
+  availability?: boolean[];
   applications?: {
     "wow-tbc"?: {
       mainCharacter?: string;
@@ -26,6 +28,7 @@ export default function PerfilWOW() {
   const [userData, setUserData] = useState<WowProfileUserData | null>(null);
   const [trophies, setTrophies] = useState<Trophy[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAvailability, setShowAvailability] = useState(false);
 
   const normalizedUsername =
     typeof username === "string" ? username.toLowerCase() : "";
@@ -162,6 +165,29 @@ export default function PerfilWOW() {
             </div>
           </div>
         )}
+
+        <div className="mt-12 pb-20">
+          <button
+            onClick={() => setShowAvailability((v) => !v)}
+            className="w-full flex items-center justify-between bg-[#141414] border border-red-900 rounded-2xl px-8 py-5 text-left hover:bg-red-900/10 transition"
+          >
+            <span className="text-xl font-bold text-red-400">Disponibilidade para jogar</span>
+            <span className="text-red-600 text-lg">{showAvailability ? "▲" : "▼"}</span>
+          </button>
+
+          {showAvailability && (
+            <div className="mt-3 bg-[#141414] border border-red-900 rounded-2xl px-8 py-6">
+              <AvailabilityGrid
+                value={
+                  Array.isArray(userData.availability) && userData.availability.length === 28
+                    ? flatToAvailability(userData.availability)
+                    : createEmptyAvailability()
+                }
+                readonly
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
