@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -19,6 +19,9 @@ export default function AdminMembersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [addingCharacterId, setAddingCharacterId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [characterByUser, setCharacterByUser] = useState<Record<string, string>>({});
   const router = useRouter();
 
   const fetchUsers = useCallback(async () => {
@@ -118,6 +121,82 @@ export default function AdminMembersPage() {
     }
   };
 
+  const filteredUsers = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+
+    if (!term) {
+      return users;
+    }
+
+    return users.filter((user) => {
+      return (
+        user.username.toLowerCase().includes(term) ||
+        user.email.toLowerCase().includes(term) ||
+        getRoleLabel(user.role).toLowerCase().includes(term)
+      );
+    });
+  }, [searchTerm, users]);
+
+  const handleCharacterInputChange = (userId: string, value: string) => {
+    setCharacterByUser((current) => ({
+      ...current,
+      [userId]: value,
+    }));
+  };
+
+  const addCharacterManually = async (user: AdminUser) => {
+    const characterName = (characterByUser[user.id] || "").trim();
+
+    if (!characterName) {
+      alert("Digite o nome do personagem antes de adicionar.");
+      return;
+    }
+
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        router.push("/");
+        return;
+      }
+
+      setAddingCharacterId(user.id);
+
+      const token = await currentUser.getIdToken();
+      const response = await fetch(`/api/admin/users/${user.id}/characters`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: characterName,
+          server: "nightslayer",
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Erro ao adicionar personagem.");
+      }
+
+      setCharacterByUser((current) => ({
+        ...current,
+        [user.id]: "",
+      }));
+
+      alert(`Personagem ${characterName} adicionado para ${user.username}.`);
+    } catch (error) {
+      console.error("Erro ao adicionar personagem manualmente:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Erro ao adicionar personagem."
+      );
+    } finally {
+      setAddingCharacterId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-transparent text-white">
@@ -146,12 +225,28 @@ export default function AdminMembersPage() {
         </div>
 
         <div className="space-y-4">
-          {users.map((user) => (
+          <div className="bg-[#111] border border-red-900 rounded-xl p-4">
+            <label className="block text-sm font-semibold text-red-400 mb-2">
+              Pesquisar membro
+            </label>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Buscar por username, email ou cargo"
+              className="w-full rounded-lg border border-red-900 bg-[#1a1a1a] px-4 py-3 text-white outline-none transition focus:border-red-600"
+            />
+            <p className="mt-2 text-xs text-gray-500">
+              {filteredUsers.length} resultado{filteredUsers.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+
+          {filteredUsers.map((user) => (
             <div
               key={user.id}
               className="bg-[#111] border border-red-900 p-6 rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4"
             >
-              <div>
+              <div className="w-full">
                 <p className="text-xl font-bold text-red-400">
                   {user.username}
                 </p>
@@ -163,6 +258,27 @@ export default function AdminMembersPage() {
                 <p className="text-gray-500 text-sm">
                   Cargo: {getRoleLabel(user.role)}
                 </p>
+
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="text"
+                    value={characterByUser[user.id] || ""}
+                    onChange={(event) =>
+                      handleCharacterInputChange(user.id, event.target.value)
+                    }
+                    placeholder="Adicionar personagem manualmente"
+                    className="w-full rounded-lg border border-red-900 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none transition focus:border-red-600"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => addCharacterManually(user)}
+                    disabled={addingCharacterId === user.id}
+                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                  >
+                    {addingCharacterId === user.id ? "Adicionando..." : "Adicionar personagem"}
+                  </button>
+                </div>
               </div>
 
               <button
