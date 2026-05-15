@@ -31,14 +31,19 @@ export default function EditProfile() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       if (!u) {
-        router.push("/login");
+        router.replace("/complete-profile");
+        setLoading(false);
         return;
       }
 
       const snap = await getDoc(doc(db, "users", u.uid));
       const data = snap.data();
 
-      if (!data) return;
+      if (!data?.username || !data?.discord) {
+        router.replace("/complete-profile");
+        setLoading(false);
+        return;
+      }
 
       setUsername(data.username || "");
       setPhotoURL(data.photoURL || "");
