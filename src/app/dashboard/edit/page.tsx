@@ -7,6 +7,12 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import AvailabilityGrid, {
+  Availability,
+  createEmptyAvailability,
+  flatToAvailability,
+  availabilityToFlat,
+} from "@/components/availability-grid";
 
 export default function EditProfile() {
   const [loading, setLoading] = useState(true);
@@ -16,6 +22,9 @@ export default function EditProfile() {
   const [username, setUsername] = useState("");
   const [photoURL, setPhotoURL] = useState("");
   const [coverURL, setCoverURL] = useState("");
+  const [availability, setAvailability] = useState<Availability>(
+    createEmptyAvailability
+  );
 
   const router = useRouter();
 
@@ -34,6 +43,11 @@ export default function EditProfile() {
       setUsername(data.username || "");
       setPhotoURL(data.photoURL || "");
       setCoverURL(data.coverURL || "");
+
+      if (Array.isArray(data.availability) && data.availability.length === 28) {
+        setAvailability(flatToAvailability(data.availability as boolean[]));
+      }
+
       setLoading(false);
     });
 
@@ -127,6 +141,7 @@ export default function EditProfile() {
           username,
           photoURL,
           coverURL,
+          availability: availabilityToFlat(availability),
         }),
       });
 
@@ -242,6 +257,13 @@ export default function EditProfile() {
           <p className="text-sm text-gray-500">
             A capa aparece no topo do seu perfil dentro do site.
           </p>
+        </div>
+
+        <div className="mb-8">
+          <label className="block mb-4 text-red-400 font-semibold">
+            Disponibilidade para jogar
+          </label>
+          <AvailabilityGrid value={availability} onChange={setAvailability} />
         </div>
 
         <div className="flex justify-between">

@@ -133,6 +133,13 @@ export async function PATCH(request: NextRequest) {
       typeof body.photoURL === "string" ? body.photoURL.trim() : "";
     const coverURL =
       typeof body.coverURL === "string" ? body.coverURL.trim() : "";
+    const availabilityRaw = body.availability;
+    const availability =
+      Array.isArray(availabilityRaw) &&
+      availabilityRaw.length === 28 &&
+      availabilityRaw.every((v) => typeof v === "boolean")
+        ? (availabilityRaw as boolean[])
+        : null;
 
     if (!username) {
       return NextResponse.json(
@@ -160,6 +167,7 @@ export async function PATCH(request: NextRequest) {
         username,
         photoURL,
         coverURL,
+        ...(availability !== null && { availability }),
       },
       { merge: true }
     );
