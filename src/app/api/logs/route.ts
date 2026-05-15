@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase-admin";
 export const runtime = "nodejs";
 
 const LOGS_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const TBC_PHASE_PARTITION = 2;
 
 let cachedToken: string | null = null;
 let tokenExpires = 0;
@@ -17,11 +18,13 @@ function getLogsCacheKey({
   server,
   region,
   zone,
+  partition,
 }: {
   name: string;
   server: string;
   region: string;
   zone: string;
+  partition: number;
 }) {
   return Buffer.from(
     JSON.stringify({
@@ -29,6 +32,7 @@ function getLogsCacheKey({
       server: server.trim().toLowerCase(),
       region: region.trim().toUpperCase(),
       zone,
+      partition,
     })
   ).toString("base64url");
 }
@@ -93,9 +97,16 @@ export async function GET(request: Request) {
       server,
       region,
       zone,
+      partition: TBC_PHASE_PARTITION,
     });
 
-    const cacheKey = getLogsCacheKey({ name, server, region, zone });
+    const cacheKey = getLogsCacheKey({
+      name,
+      server,
+      region,
+      zone,
+      partition: TBC_PHASE_PARTITION,
+    });
     const cacheRef = adminDb.collection("logsCache").doc(cacheKey);
 
     try {
@@ -133,7 +144,7 @@ export async function GET(request: Request) {
             classID
             zoneRankings(
               zoneID: ${zone},
-              partition: 1,
+                partition: ${TBC_PHASE_PARTITION},
               difficulty: 3
             )
           }
@@ -210,6 +221,7 @@ export async function GET(request: Request) {
         server,
         region,
         zone,
+        partition: TBC_PHASE_PARTITION,
         lastErrorMessage,
       });
       throw new Error(lastErrorMessage);

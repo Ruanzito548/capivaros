@@ -13,6 +13,7 @@ export interface Trophy {
 
 const KARAZHAN_ZONE_ID = 1047;
 const GRUUL_MAG_ZONE_ID = 1048;
+const SSC_TK_ZONE_ID = 1050;
 
 const MANAGED_TROPHY_NAMES = new Set([
   "Top 1 Season 1 Karazhan",
@@ -23,6 +24,10 @@ const MANAGED_TROPHY_NAMES = new Set([
   "Top 3 Season 1 Gruull/Mag",
   "Entre os 5 melhores Karazhan",
   "Entre os 5 melhores Gruul/Mag",
+  "Top 1 Season 1 SSC/TK",
+  "Top 2 Season 1 SSC/TK",
+  "Top 3 Season 1 SSC/TK",
+  "Entre os 5 melhores SSC/TK",
 ]);
 
 function normalizeUsername(username?: string) {
@@ -48,8 +53,8 @@ function getUniqueMemberRanking(entries: RankingEntry[]) {
 }
 
 function buildZoneTrophies(
-  zoneName: "Karazhan" | "Gruul/Mag",
-  topPrefix: "Karazhan" | "Gruull/Mag",
+  zoneName: "Karazhan" | "Gruul/Mag" | "SSC/TK",
+  topPrefix: "Karazhan" | "Gruull/Mag" | "SSC/TK",
   ranking: RankingEntry[],
   username: string | undefined
 ) {
@@ -123,6 +128,12 @@ export function getWowTbcRankingTrophiesForUser(
       rankings[GRUUL_MAG_ZONE_ID] ?? [],
       username
     ),
+    ...buildZoneTrophies(
+      "SSC/TK",
+      "SSC/TK",
+      rankings[SSC_TK_ZONE_ID] ?? [],
+      username
+    ),
   ];
 }
 
@@ -131,19 +142,22 @@ export async function fetchWowTbcRankingTrophies(
   existingTrophies: Trophy[] = []
 ) {
   try {
-    const [karazhanResponse, gruulMagResponse] = await Promise.all([
+    const [karazhanResponse, gruulMagResponse, sscTkResponse] = await Promise.all([
       fetch(`/api/ranking?zone=${KARAZHAN_ZONE_ID}&limit=20`),
       fetch(`/api/ranking?zone=${GRUUL_MAG_ZONE_ID}&limit=20`),
+      fetch(`/api/ranking?zone=${SSC_TK_ZONE_ID}&limit=20`),
     ]);
 
-    const [karazhanRanking, gruulMagRanking] = await Promise.all([
+    const [karazhanRanking, gruulMagRanking, sscTkRanking] = await Promise.all([
       karazhanResponse.ok ? karazhanResponse.json() : Promise.resolve([]),
       gruulMagResponse.ok ? gruulMagResponse.json() : Promise.resolve([]),
+      sscTkResponse.ok ? sscTkResponse.json() : Promise.resolve([]),
     ]);
 
     const derivedTrophies = getWowTbcRankingTrophiesForUser(username, {
       [KARAZHAN_ZONE_ID]: Array.isArray(karazhanRanking) ? karazhanRanking : [],
       [GRUUL_MAG_ZONE_ID]: Array.isArray(gruulMagRanking) ? gruulMagRanking : [],
+      [SSC_TK_ZONE_ID]: Array.isArray(sscTkRanking) ? sscTkRanking : [],
     });
 
     return mergeWowTbcTrophies(existingTrophies, derivedTrophies);

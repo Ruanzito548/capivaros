@@ -14,6 +14,7 @@ interface RankingEntry {
 const RAIDS = [
   { id: 1047, name: "Karazhan" },
   { id: 1048, name: "Gruul & Magtheridon" },
+  { id: 1050, name: "SSC / TK" },
 ];
 
 const PODIUM_STYLE = [
@@ -102,7 +103,7 @@ export default function RankingPage() {
           Carregando rankings...
         </div>
       ) : (
-        <div className="mx-auto grid max-w-5xl gap-12 md:grid-cols-2">
+        <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-2 xl:grid-cols-3">
           {RAIDS.map((raid) => {
             const ranking = rankings[raid.id] ?? [];
             const podium = ranking.slice(0, 3);
