@@ -345,6 +345,13 @@ export default function CharactersPage() {
                     >
                       Logs Gruul / Magtheridon
                     </button>
+
+                    <button
+                      onClick={() => void fetchLogs(1056)}
+                      className="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg"
+                    >
+                      Logs SSC / TK
+                    </button>
                   </div>
                 </div>
 
@@ -357,7 +364,11 @@ export default function CharactersPage() {
                 {logsData && (
                   <div className="bg-[#1c1c1c] p-6 rounded-xl border border-red-900">
                     <p className="text-center mb-4">
-                      Raid: {logsData.zone === 1047 ? "Karazhan" : "Gruul / Magtheridon"}
+                      Raid: {logsData.zone === 1047
+                        ? "Karazhan"
+                        : logsData.zone === 1048
+                        ? "Gruul / Magtheridon"
+                        : "SSC / TK"}
                     </p>
 
                     <div className="grid grid-cols-3 gap-6 text-center">
