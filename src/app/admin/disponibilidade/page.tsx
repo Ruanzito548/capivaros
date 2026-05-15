@@ -23,6 +23,11 @@ interface PlayerResult {
   availability: Availability;
 }
 
+function formatHourRangeLabel(startHour: number) {
+  const endHour = (startHour + 1) % 24;
+  return `${String(startHour).padStart(2, "0")}:00 as ${String(endHour).padStart(2, "0")}:00`;
+}
+
 export default function AdminDisponibilidade() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -92,8 +97,6 @@ export default function AdminDisponibilidade() {
       </div>
     );
   }
-
-  const canSearch = selectedDay !== null && selectedPeriod !== null;
 
   return (
     <div className="min-h-screen bg-transparent text-white px-6 py-16">
@@ -176,7 +179,7 @@ export default function AdminDisponibilidade() {
 
               <div className="mt-6 space-y-4">
                 {hourlyResults.map(({ hour, players: hourPlayers }) => {
-                  const hourLabel = `${String(hour).padStart(2, "0")}:00`;
+                  const hourLabel = formatHourRangeLabel(hour);
                   return (
                     <div
                       key={hourLabel}

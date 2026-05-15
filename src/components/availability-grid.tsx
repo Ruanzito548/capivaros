@@ -30,6 +30,11 @@ function createEmptyPeriodHours() {
   return Array(HOURS_PER_PERIOD).fill(false);
 }
 
+function formatHourRangeLabel(startHour: number) {
+  const endHour = (startHour + 1) % 24;
+  return `${String(startHour).padStart(2, "0")}:00 as ${String(endHour).padStart(2, "0")}:00`;
+}
+
 export function createEmptyAvailability(): Availability {
   return Array.from({ length: DAYS.length }, () =>
     Array.from({ length: PERIODS.length }, () => createEmptyPeriodHours())
@@ -244,7 +249,7 @@ export default function AvailabilityGrid({
             <div className="mt-5 grid grid-cols-3 gap-3">
               {PERIODS[editor.periodIndex].slots.map((hour, hourIndex) => {
                 const selected = editor.draftHours[hourIndex] ?? false;
-                const hourLabel = `${String(hour).padStart(2, "0")}:00`;
+                const hourLabel = formatHourRangeLabel(hour);
 
                 return (
                   <button
@@ -314,7 +319,7 @@ export default function AvailabilityGrid({
             <div className="mt-5 grid grid-cols-3 gap-3">
               {PERIODS[viewer.periodIndex].slots.map((hour, hourIndex) => {
                 const selected = viewer.hours[hourIndex] ?? false;
-                const hourLabel = `${String(hour).padStart(2, "0")}:00`;
+                const hourLabel = formatHourRangeLabel(hour);
 
                 return (
                   <div
