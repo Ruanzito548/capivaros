@@ -103,7 +103,7 @@ export default function RankingPage() {
           Carregando rankings...
         </div>
       ) : (
-        <div className="mx-auto w-full gap-12 grid max-w-full px-6 md:px-0 md:grid-cols-1">
+        <div className="mx-auto w-full gap-8 grid max-w-full px-6 md:px-0 md:grid-cols-3">
           {RAIDS.map((raid) => {
             const ranking = rankings[raid.id] ?? [];
             const podium = ranking.slice(0, 3);
@@ -113,7 +113,7 @@ export default function RankingPage() {
               <Link
                 key={raid.id}
                 href={`/ranking/${raid.id}`}
-                className="group rounded-2xl border border-red-900 bg-[#141414] p-10 shadow-[0_0_20px_rgba(255,0,0,0.25)] transition hover:bg-red-900/30 hover:shadow-[0_0_35px_rgba(255,0,0,0.5)]" style={{minHeight: '500px'}}
+                className="group rounded-2xl border border-red-900 bg-[#141414] p-8 shadow-[0_0_20px_rgba(255,0,0,0.25)] transition hover:bg-red-900/30 hover:shadow-[0_0_35px_rgba(255,0,0,0.5)]" style={{minHeight: '550px'}}
               >
                 <h2 className="mb-8 text-center text-2xl font-bold text-red-400">
                   {raid.name}
