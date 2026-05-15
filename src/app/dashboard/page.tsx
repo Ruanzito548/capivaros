@@ -179,12 +179,19 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="mt-20 text-center pb-20">
+        <div className="mt-20 flex flex-col items-center gap-4 pb-20">
           <button
             onClick={() => router.push("/dashboard/edit")}
             className="text-sm text-gray-400 hover:text-red-500 underline"
           >
             Editar Perfil
+          </button>
+
+          <button
+            onClick={() => router.push("/dashboard/edit#disponibilidade")}
+            className="flex items-center gap-2 rounded-xl border border-red-900 bg-[#141414] px-6 py-3 text-sm font-semibold text-red-400 shadow-[0_0_10px_rgba(220,38,38,0.2)] transition hover:bg-red-900/20 hover:text-white"
+          >
+            Disponibilidade
           </button>
         </div>
       </div>

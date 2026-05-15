@@ -259,7 +259,7 @@ export default function EditProfile() {
           </p>
         </div>
 
-        <div className="mb-8">
+        <div id="disponibilidade" className="mb-8 scroll-mt-24">
           <label className="block mb-4 text-red-400 font-semibold">
             Disponibilidade para jogar
           </label>
