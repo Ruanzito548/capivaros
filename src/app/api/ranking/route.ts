@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { canAccessWowAdmin } from "@/lib/permissions";
 
 export const runtime = "nodejs";
 const RANKING_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
@@ -11,11 +12,33 @@ interface RankingResult {
   photoURL?: string;
 }
 
+async function getAuthenticatedRole(request: Request) {
+  const authorization = request.headers.get("authorization");
+  const token = authorization?.startsWith("Bearer ")
+    ? authorization.slice(7)
+    : null;
+
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const decoded = await adminAuth.verifyIdToken(token);
+    const snap = await adminDb.collection("users").doc(decoded.uid).get();
+    const role = snap.data()?.role;
+    return typeof role === "string" ? role : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
 
   const zone = searchParams.get("zone");
   const limitParam = searchParams.get("limit");
+  const forceParam = searchParams.get("force");
+  const shouldForceRefresh = forceParam === "1" || forceParam === "true";
 
   if (!zone) {
     return NextResponse.json(
@@ -27,9 +50,22 @@ export async function GET(request: Request) {
   const limit = limitParam ? Number(limitParam) : 9999;
 
   try {
+    if (shouldForceRefresh) {
+      const role = await getAuthenticatedRole(request);
+
+      if (!role) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      if (!canAccessWowAdmin(role)) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     const rankingCacheRef = adminDb.collection("rankingCache").doc(zone);
 
-    try {
+    if (!shouldForceRefresh) {
+      try {
       const rankingCacheSnap = await rankingCacheRef.get();
       const rankingCacheData = rankingCacheSnap.data();
 
@@ -47,8 +83,9 @@ export async function GET(request: Request) {
       ) {
         return NextResponse.json(rankingCacheData.entries.slice(0, limit));
       }
-    } catch (cacheError) {
-      console.error("Ranking cache read failed:", cacheError);
+      } catch (cacheError) {
+        console.error("Ranking cache read failed:", cacheError);
+      }
     }
 
     const usersSnapshot = await adminDb.collection("users").get();
@@ -70,7 +107,8 @@ export async function GET(request: Request) {
         const url =
           `${origin}/api/logs?name=${encodeURIComponent(char.name)}` +
           `&server=${encodeURIComponent(char.server)}` +
-          `&region=US&zone=${encodeURIComponent(zone)}`;
+          `&region=US&zone=${encodeURIComponent(zone)}` +
+          `${shouldForceRefresh ? "&force=1" : ""}`;
 
         const promise = fetch(url, {
           signal: AbortSignal.timeout(8000),

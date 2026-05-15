@@ -81,6 +81,8 @@ export async function GET(request: Request) {
   const server = searchParams.get("server");
   let region = searchParams.get("region") ?? "US";
   const zone = searchParams.get("zone") ?? "1047";
+  const forceParam = searchParams.get("force");
+  const shouldForceRefresh = forceParam === "1" || forceParam === "true";
 
   if (!name || !server) {
     return NextResponse.json(
@@ -109,25 +111,27 @@ export async function GET(request: Request) {
     });
     const cacheRef = adminDb.collection("logsCache").doc(cacheKey);
 
-    try {
-      const cacheSnap = await cacheRef.get();
-      const cacheData = cacheSnap.data();
+    if (!shouldForceRefresh) {
+      try {
+        const cacheSnap = await cacheRef.get();
+        const cacheData = cacheSnap.data();
 
-      if (
-        cacheData &&
-        typeof cacheData.fetchedAt === "number" &&
-        Date.now() - cacheData.fetchedAt < LOGS_CACHE_TTL_MS &&
-        cacheData.payload?.name
-      ) {
-        console.log("WCL logs cache hit:", {
-          key: cacheKey,
-          ageMs: Date.now() - cacheData.fetchedAt,
-          hasName: Boolean(cacheData.payload?.name),
-        });
-        return NextResponse.json(cacheData.payload);
+        if (
+          cacheData &&
+          typeof cacheData.fetchedAt === "number" &&
+          Date.now() - cacheData.fetchedAt < LOGS_CACHE_TTL_MS &&
+          cacheData.payload?.name
+        ) {
+          console.log("WCL logs cache hit:", {
+            key: cacheKey,
+            ageMs: Date.now() - cacheData.fetchedAt,
+            hasName: Boolean(cacheData.payload?.name),
+          });
+          return NextResponse.json(cacheData.payload);
+        }
+      } catch (cacheError) {
+        console.error("Logs cache read failed:", cacheError);
       }
-    } catch (cacheError) {
-      console.error("Logs cache read failed:", cacheError);
     }
 
     const accessToken = await getAccessToken();

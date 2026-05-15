@@ -12,7 +12,49 @@ import { canAccessWowAdmin, canManageRoles } from "@/lib/permissions";
 export default function AdminWOWTBC() {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<string | null>(null);
+  const [refreshingRanking, setRefreshingRanking] = useState(false);
+  const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
   const router = useRouter();
+
+  const forceRefreshRanking = async () => {
+    const user = auth.currentUser;
+
+    if (!user) {
+      setRefreshMessage("Usuario nao autenticado.");
+      return;
+    }
+
+    try {
+      setRefreshingRanking(true);
+      setRefreshMessage("Atualizando ranking forcado (Karazhan, Gruul/Mag, SSC/TK)...");
+
+      const token = await user.getIdToken();
+      const zones = [1047, 1048, 1056];
+
+      const responses = await Promise.all(
+        zones.map((zone) =>
+          fetch(`/api/ranking?zone=${zone}&force=1`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+        )
+      );
+
+      const hasError = responses.some((response) => !response.ok);
+
+      if (hasError) {
+        setRefreshMessage("Falha ao atualizar ranking. Verifique as permissoes e tente novamente.");
+        return;
+      }
+
+      setRefreshMessage("Ranking atualizado com sucesso usando dados novos da API de logs.");
+    } catch {
+      setRefreshMessage("Erro inesperado ao atualizar ranking.");
+    } finally {
+      setRefreshingRanking(false);
+    }
+  };
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -74,6 +116,32 @@ export default function AdminWOWTBC() {
           <p className="text-gray-400 mt-4">
             Painel administrativo da guilda
           </p>
+        </div>
+
+        <div className="mb-10 rounded-2xl border border-red-900 bg-[#111] p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-red-400">
+                Ranking TBC
+              </h2>
+              <p className="mt-1 text-sm text-gray-400">
+                Forca a recarga do ranking buscando dados novos na API de logs.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={forceRefreshRanking}
+              disabled={refreshingRanking}
+              className="rounded-xl border border-red-700 bg-red-700/20 px-5 py-3 text-sm font-semibold text-red-300 transition hover:border-red-500 hover:bg-red-700/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {refreshingRanking ? "Atualizando..." : "Atualizar Ranking Forcado"}
+            </button>
+          </div>
+
+          {refreshMessage && (
+            <p className="mt-4 text-sm text-gray-300">{refreshMessage}</p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
