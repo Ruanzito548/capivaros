@@ -101,10 +101,10 @@ export default function RaidRankingPage() {
           Carregando ranking...
         </div>
       ) : (
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto w-full max-w-none">
           {ranking.length > 0 ? (
             <>
-              <div className="mb-10 grid gap-4 md:grid-cols-3 md:items-end">
+              <div className="mb-10 grid gap-4 md:grid-cols-3 md:items-end" style={{minHeight: '600px'}}>
                 {podium.map((entry, index) => {
                   const style = PODIUM_STYLE[index];
 
@@ -129,17 +129,18 @@ export default function RaidRankingPage() {
                           >
                             #{index + 1}
                           </p>
-                          <p className="mt-4 text-2xl font-bold leading-tight text-white break-words">
+                          <p className="mt-4 truncate text-2xl font-bold leading-tight text-white">
                             {entry.character}
                           </p>
                           <span
                             role="link"
                             tabIndex={0}
-                            className="mt-3 block w-full cursor-pointer text-base text-red-300 underline underline-offset-2 whitespace-normal break-all leading-tight"
+                            className="mt-3 block w-full cursor-pointer text-base text-red-300 underline underline-offset-2 whitespace-nowrap overflow-hidden text-ellipsis leading-tight"
                             onClick={() => goToProfile(entry.username)}
                             onKeyDown={(event) =>
                               handleUsernameKeyDown(event, entry.username)
                             }
+                            title={entry.username}
                           >
                             {entry.username}
                           </span>
@@ -158,30 +159,28 @@ export default function RaidRankingPage() {
                 {remaining.map((entry, index) => (
                   <div
                     key={`${entry.username}-${entry.character}-${index}`}
-                    className="flex items-start justify-between gap-3 rounded-xl border border-red-900 bg-[#141414] p-6 shadow-[0_0_15px_rgba(255,0,0,0.2)]"
+                    className="flex items-center justify-between gap-4 rounded-xl border border-red-900 bg-[#141414] p-6 shadow-[0_0_15px_rgba(255,0,0,0.2)]"
                   >
-                    <div className="min-w-0 pr-2">
-                      <span className="text-lg font-bold text-red-300">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="shrink-0 text-lg font-bold text-red-300">
                         #{index + 4}
                       </span>
-                      <span className="mx-3 text-red-900/70">|</span>
-                      <span className="text-lg text-white break-words">{entry.character}</span>
-                      <span className="text-gray-400">
-                        {" "}
-                        (
-                        <span
-                          role="link"
-                          tabIndex={0}
-                          className="inline cursor-pointer align-bottom text-red-400 underline break-all whitespace-normal"
-                          onClick={() => goToProfile(entry.username)}
-                          onKeyDown={(event) =>
-                            handleUsernameKeyDown(event, entry.username)
-                          }
-                        >
-                          {entry.username}
-                        </span>
-                        )
+                      <span className="shrink-0 text-red-900/70">|</span>
+                      <span className="truncate text-lg text-white">{entry.character}</span>
+                      <span className="shrink-0 text-gray-400">(</span>
+                      <span
+                        role="link"
+                        tabIndex={0}
+                        className="cursor-pointer text-red-400 underline whitespace-nowrap"
+                        onClick={() => goToProfile(entry.username)}
+                        onKeyDown={(event) =>
+                          handleUsernameKeyDown(event, entry.username)
+                        }
+                        title={entry.username}
+                      >
+                        {entry.username}
                       </span>
+                      <span className="shrink-0 text-gray-400">)</span>
                     </div>
 
                     <div className="shrink-0 text-xl font-bold text-yellow-400">
