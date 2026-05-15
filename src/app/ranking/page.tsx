@@ -14,7 +14,7 @@ interface RankingEntry {
 const RAIDS = [
   { id: 1047, name: "Karazhan" },
   { id: 1048, name: "Gruul & Magtheridon" },
-  { id: 1050, name: "SSC / TK" },
+  { id: 1056, name: "SSC / TK" },
 ];
 
 const PODIUM_STYLE = [

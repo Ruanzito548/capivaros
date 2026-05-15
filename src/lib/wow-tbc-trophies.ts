@@ -13,7 +13,7 @@ export interface Trophy {
 
 const KARAZHAN_ZONE_ID = 1047;
 const GRUUL_MAG_ZONE_ID = 1048;
-const SSC_TK_ZONE_ID = 1050;
+const SSC_TK_ZONE_ID = 1056;
 
 const MANAGED_TROPHY_NAMES = new Set([
   "Top 1 Season 1 Karazhan",

@@ -13,7 +13,7 @@ interface RankingEntry {
 const RAID_NAMES: Record<string, string> = {
   "1047": "Karazhan",
   "1048": "Gruul & Magtheridon",
-  "1050": "SSC / TK",
+  "1056": "SSC / TK",
 };
 
 const PODIUM_STYLE = [
