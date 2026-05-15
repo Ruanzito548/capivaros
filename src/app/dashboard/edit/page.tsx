@@ -12,6 +12,8 @@ import AvailabilityGrid, {
   createEmptyAvailability,
   flatToAvailability,
   availabilityToFlat,
+  LEGACY_FLAT_LENGTH,
+  HOURLY_FLAT_LENGTH,
 } from "@/components/availability-grid";
 
 export default function EditProfile() {
@@ -49,7 +51,11 @@ export default function EditProfile() {
       setPhotoURL(data.photoURL || "");
       setCoverURL(data.coverURL || "");
 
-      if (Array.isArray(data.availability) && data.availability.length === 28) {
+      if (
+        Array.isArray(data.availability) &&
+        (data.availability.length === LEGACY_FLAT_LENGTH ||
+          data.availability.length === HOURLY_FLAT_LENGTH)
+      ) {
         setAvailability(flatToAvailability(data.availability as boolean[]));
       }
 

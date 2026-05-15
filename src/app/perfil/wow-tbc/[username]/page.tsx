@@ -179,7 +179,7 @@ export default function PerfilWOW() {
             <div className="mt-3 bg-[#141414] border border-red-900 rounded-2xl px-8 py-6">
               <AvailabilityGrid
                 value={
-                  Array.isArray(userData.availability) && userData.availability.length === 28
+                  Array.isArray(userData.availability)
                     ? flatToAvailability(userData.availability)
                     : createEmptyAvailability()
                 }

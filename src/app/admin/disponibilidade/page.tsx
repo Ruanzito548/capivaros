@@ -7,7 +7,13 @@ import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { canAccessWowAdmin } from "@/lib/permissions";
-import { DAYS, PERIODS, flatToAvailability } from "@/components/availability-grid";
+import {
+  DAYS,
+  PERIODS,
+  flatToAvailability,
+  LEGACY_FLAT_LENGTH,
+  HOURLY_FLAT_LENGTH,
+} from "@/components/availability-grid";
 
 interface PlayerResult {
   username: string;
@@ -47,10 +53,16 @@ export default function AdminDisponibilidade() {
       if (!data.username) continue;
 
       const flat = data.availability;
-      if (!Array.isArray(flat) || flat.length !== 28) continue;
+      if (
+        !Array.isArray(flat) ||
+        (flat.length !== LEGACY_FLAT_LENGTH && flat.length !== HOURLY_FLAT_LENGTH)
+      ) {
+        continue;
+      }
 
       const grid = flatToAvailability(flat as boolean[]);
-      if (grid[selectedDay]?.[selectedPeriod]) {
+      const selectedHours = grid[selectedDay]?.[selectedPeriod] ?? [];
+      if (selectedHours.some(Boolean)) {
         matched.push({
           username: data.username,
           photoURL: data.photoURL,

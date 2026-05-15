@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import {
+  DAYS,
+  PERIODS,
+  HOURS_PER_PERIOD,
+  LEGACY_FLAT_LENGTH,
+  HOURLY_FLAT_LENGTH,
+} from "@/components/availability-grid";
 
 export const runtime = "nodejs";
 
@@ -30,6 +37,28 @@ function isUsernameValid(value: string) {
 
 function hasWhitespace(value: string) {
   return /\s/.test(value);
+}
+
+function normalizeAvailability(raw: unknown): boolean[] | null {
+  if (!Array.isArray(raw) || !raw.every((v) => typeof v === "boolean")) {
+    return null;
+  }
+
+  if (raw.length === HOURLY_FLAT_LENGTH) {
+    return raw as boolean[];
+  }
+
+  if (raw.length === LEGACY_FLAT_LENGTH) {
+    const legacy = raw as boolean[];
+    return Array.from({ length: DAYS.length }, (_, d) =>
+      Array.from({ length: PERIODS.length }, (_, p) => {
+        const active = legacy[d * PERIODS.length + p] ?? false;
+        return Array.from({ length: HOURS_PER_PERIOD }, () => active);
+      }).flat()
+    ).flat();
+  }
+
+  return null;
 }
 
 async function isUsernameTaken(username: string, currentUserId: string) {
@@ -133,13 +162,7 @@ export async function PATCH(request: NextRequest) {
       typeof body.photoURL === "string" ? body.photoURL.trim() : "";
     const coverURL =
       typeof body.coverURL === "string" ? body.coverURL.trim() : "";
-    const availabilityRaw = body.availability;
-    const availability =
-      Array.isArray(availabilityRaw) &&
-      availabilityRaw.length === 28 &&
-      availabilityRaw.every((v) => typeof v === "boolean")
-        ? (availabilityRaw as boolean[])
-        : null;
+    const availability = normalizeAvailability(body.availability);
 
     if (!username) {
       return NextResponse.json(
