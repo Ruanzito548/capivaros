@@ -93,7 +93,7 @@ export default function RaidRankingPage() {
       </h1>
 
       <h2 className="mb-16 text-center text-xl text-gray-400">
-        Ranking Completo da Guilda
+        Ranking Completo da Guilda - Season 2
       </h2>
 
       {loading ? (
@@ -129,13 +129,13 @@ export default function RaidRankingPage() {
                           >
                             #{index + 1}
                           </p>
-                          <p className="mt-4 text-2xl font-bold leading-tight text-white">
+                          <p className="mt-4 truncate text-2xl font-bold leading-tight text-white">
                             {entry.character}
                           </p>
                           <span
                             role="link"
                             tabIndex={0}
-                            className="mt-3 inline-block cursor-pointer text-base text-red-300 underline underline-offset-2"
+                            className="mt-3 block w-full cursor-pointer truncate text-base text-red-300 underline underline-offset-2"
                             onClick={() => goToProfile(entry.username)}
                             onKeyDown={(event) =>
                               handleUsernameKeyDown(event, entry.username)
@@ -158,21 +158,21 @@ export default function RaidRankingPage() {
                 {remaining.map((entry, index) => (
                   <div
                     key={`${entry.username}-${entry.character}-${index}`}
-                    className="flex items-center justify-between rounded-xl border border-red-900 bg-[#141414] p-6 shadow-[0_0_15px_rgba(255,0,0,0.2)]"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-red-900 bg-[#141414] p-6 shadow-[0_0_15px_rgba(255,0,0,0.2)]"
                   >
-                    <div className="pr-4">
+                    <div className="min-w-0 pr-2">
                       <span className="text-lg font-bold text-red-300">
                         #{index + 4}
                       </span>
                       <span className="mx-3 text-red-900/70">|</span>
-                      <span className="text-lg text-white">{entry.character}</span>
+                      <span className="truncate text-lg text-white">{entry.character}</span>
                       <span className="text-gray-400">
                         {" "}
                         (
                         <span
                           role="link"
                           tabIndex={0}
-                          className="cursor-pointer text-red-400 underline"
+                          className="inline-block max-w-[180px] cursor-pointer truncate align-bottom text-red-400 underline"
                           onClick={() => goToProfile(entry.username)}
                           onKeyDown={(event) =>
                             handleUsernameKeyDown(event, entry.username)
@@ -184,7 +184,7 @@ export default function RaidRankingPage() {
                       </span>
                     </div>
 
-                    <div className="text-xl font-bold text-yellow-400">
+                    <div className="shrink-0 text-xl font-bold text-yellow-400">
                       {entry.percent.toFixed(2)} Parse
                     </div>
                   </div>

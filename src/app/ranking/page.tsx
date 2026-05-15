@@ -95,7 +95,7 @@ export default function RankingPage() {
   return (
     <div className="min-h-screen bg-transparent px-6 py-20 text-white">
       <h1 className="mb-16 text-center text-5xl font-bold text-red-500 drop-shadow-[0_0_15px_rgba(255,0,0,0.8)]">
-        Ranking TBC Classic
+        Ranking TBC Classic - Season 2
       </h1>
 
       {loading ? (
@@ -141,13 +141,13 @@ export default function RankingPage() {
                                 <p className={`text-sm font-bold uppercase tracking-[0.3em] ${style.place}`}>
                                   #{index + 1}
                                 </p>
-                                <p className="mt-3 text-lg font-bold leading-tight text-white">
+                                <p className="mt-3 truncate text-lg font-bold leading-tight text-white">
                                   {entry.character}
                                 </p>
                                 <span
                                   role="link"
                                   tabIndex={0}
-                                  className="mt-2 inline-block cursor-pointer text-sm text-red-300 underline underline-offset-2"
+                                  className="mt-2 block w-full cursor-pointer truncate text-sm text-red-300 underline underline-offset-2"
                                   onClick={(event) =>
                                     handleUsernameClick(event, entry.username)
                                   }
@@ -173,21 +173,21 @@ export default function RankingPage() {
                         {remaining.map((entry, index) => (
                           <div
                             key={`${entry.username}-${entry.character}-${index}`}
-                            className="flex items-center justify-between rounded-xl border border-red-900/40 bg-black/20 px-4 py-3"
+                            className="flex items-center justify-between gap-3 rounded-xl border border-red-900/40 bg-black/20 px-4 py-3"
                           >
-                            <div className="pr-4">
+                            <div className="min-w-0 pr-2">
                               <span className="font-bold text-red-300">
                                 #{index + 4}
                               </span>
                               <span className="mx-2 text-red-900/70">|</span>
-                              <span className="text-white">{entry.character}</span>
+                              <span className="truncate text-white">{entry.character}</span>
                               <span className="text-gray-400">
                                 {" "}
                                 (
                                 <span
                                   role="link"
                                   tabIndex={0}
-                                  className="cursor-pointer text-red-400 underline"
+                                  className="inline-block max-w-[150px] cursor-pointer truncate align-bottom text-red-400 underline"
                                   onClick={(event) =>
                                     handleUsernameClick(event, entry.username)
                                   }
@@ -201,7 +201,7 @@ export default function RankingPage() {
                               </span>
                             </div>
 
-                            <span className="text-sm font-bold text-yellow-400">
+                            <span className="shrink-0 text-sm font-bold text-yellow-400">
                               {entry.percent.toFixed(2)} Parse
                             </span>
                           </div>
