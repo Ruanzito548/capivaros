@@ -52,17 +52,17 @@ export default function AvailabilityGrid({ value, onChange, readonly = false }: 
   };
 
   return (
-    <div className="w-full overflow-x-auto">
-      <table className="border-collapse text-sm select-none min-w-[720px] table-fixed">
+    <div className="w-full">
+      <table className="w-full border-collapse table-fixed text-sm select-none">
         <thead>
           <tr>
-            <th className="w-28 pb-3 pr-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <th className="w-24 pb-3 pr-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-500 sm:w-28 sm:pr-3 sm:text-xs">
               Período
             </th>
             {DAYS.map((day) => (
               <th
                 key={day}
-                className="w-20 pb-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider px-1"
+                className="pb-3 px-1 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-400 sm:text-xs"
               >
                 {day}
               </th>
@@ -88,7 +88,7 @@ export default function AvailabilityGrid({ value, onChange, readonly = false }: 
                       onClick={() => toggle(d, p)}
                       disabled={readonly}
                       className={[
-                        "flex h-12 w-12 items-center justify-center rounded-md border text-lg transition-all duration-150 mx-auto",
+                        "mx-auto flex h-9 w-9 items-center justify-center rounded-md border text-sm transition-all duration-150 sm:h-10 sm:w-10 sm:text-base md:h-12 md:w-12 md:text-lg",
                         readonly ? "cursor-default" : "cursor-pointer",
                         active
                           ? "border-red-600 bg-red-600/30 shadow-[0_0_8px_rgba(220,38,38,0.5)]"
