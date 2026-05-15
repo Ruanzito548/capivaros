@@ -19,19 +19,19 @@ const RAID_NAMES: Record<string, string> = {
 const PODIUM_STYLE = [
   {
     wrapper: "order-2 md:order-2",
-    card: "min-h-[200px] bg-gradient-to-b from-yellow-300/25 via-yellow-500/15 to-[#1a1200] border-yellow-400/80",
+    card: "min-h-[240px] bg-gradient-to-b from-yellow-300/25 via-yellow-500/15 to-[#1a1200] border-yellow-400/80",
     place: "text-yellow-300",
     score: "text-yellow-200",
   },
   {
     wrapper: "order-1 md:order-1 md:translate-y-8",
-    card: "min-h-[174px] bg-gradient-to-b from-slate-200/20 via-slate-400/10 to-[#121212] border-slate-300/60",
+    card: "min-h-[220px] bg-gradient-to-b from-slate-200/20 via-slate-400/10 to-[#121212] border-slate-300/60",
     place: "text-slate-200",
     score: "text-slate-100",
   },
   {
     wrapper: "order-3 md:order-3 md:translate-y-14",
-    card: "min-h-[154px] bg-gradient-to-b from-amber-700/30 via-amber-900/15 to-[#121212] border-amber-600/70",
+    card: "min-h-[210px] bg-gradient-to-b from-amber-700/30 via-amber-900/15 to-[#121212] border-amber-600/70",
     place: "text-amber-400",
     score: "text-amber-200",
   },
@@ -129,13 +129,13 @@ export default function RaidRankingPage() {
                           >
                             #{index + 1}
                           </p>
-                          <p className="mt-4 truncate text-2xl font-bold leading-tight text-white">
+                          <p className="mt-4 text-2xl font-bold leading-tight text-white break-words">
                             {entry.character}
                           </p>
                           <span
                             role="link"
                             tabIndex={0}
-                            className="mt-3 block w-full cursor-pointer truncate text-base text-red-300 underline underline-offset-2"
+                            className="mt-3 block w-full cursor-pointer text-base text-red-300 underline underline-offset-2 whitespace-normal break-all leading-tight"
                             onClick={() => goToProfile(entry.username)}
                             onKeyDown={(event) =>
                               handleUsernameKeyDown(event, entry.username)
@@ -158,21 +158,21 @@ export default function RaidRankingPage() {
                 {remaining.map((entry, index) => (
                   <div
                     key={`${entry.username}-${entry.character}-${index}`}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-red-900 bg-[#141414] p-6 shadow-[0_0_15px_rgba(255,0,0,0.2)]"
+                    className="flex items-start justify-between gap-3 rounded-xl border border-red-900 bg-[#141414] p-6 shadow-[0_0_15px_rgba(255,0,0,0.2)]"
                   >
                     <div className="min-w-0 pr-2">
                       <span className="text-lg font-bold text-red-300">
                         #{index + 4}
                       </span>
                       <span className="mx-3 text-red-900/70">|</span>
-                      <span className="truncate text-lg text-white">{entry.character}</span>
+                      <span className="text-lg text-white break-words">{entry.character}</span>
                       <span className="text-gray-400">
                         {" "}
                         (
                         <span
                           role="link"
                           tabIndex={0}
-                          className="inline-block max-w-[180px] cursor-pointer truncate align-bottom text-red-400 underline"
+                          className="inline cursor-pointer align-bottom text-red-400 underline break-all whitespace-normal"
                           onClick={() => goToProfile(entry.username)}
                           onKeyDown={(event) =>
                             handleUsernameKeyDown(event, entry.username)

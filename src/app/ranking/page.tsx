@@ -20,19 +20,19 @@ const RAIDS = [
 const PODIUM_STYLE = [
   {
     wrapper: "order-2 md:order-2",
-    card: "min-h-[172px] bg-gradient-to-b from-yellow-300/25 via-yellow-500/15 to-[#1a1200] border-yellow-400/80",
+    card: "min-h-[220px] bg-gradient-to-b from-yellow-300/25 via-yellow-500/15 to-[#1a1200] border-yellow-400/80",
     place: "text-yellow-300",
     score: "text-yellow-200",
   },
   {
     wrapper: "order-1 md:order-1 md:translate-y-6",
-    card: "min-h-[148px] bg-gradient-to-b from-slate-200/20 via-slate-400/10 to-[#121212] border-slate-300/60",
+    card: "min-h-[200px] bg-gradient-to-b from-slate-200/20 via-slate-400/10 to-[#121212] border-slate-300/60",
     place: "text-slate-200",
     score: "text-slate-100",
   },
   {
     wrapper: "order-3 md:order-3 md:translate-y-10",
-    card: "min-h-[132px] bg-gradient-to-b from-amber-700/30 via-amber-900/15 to-[#121212] border-amber-600/70",
+    card: "min-h-[190px] bg-gradient-to-b from-amber-700/30 via-amber-900/15 to-[#121212] border-amber-600/70",
     place: "text-amber-400",
     score: "text-amber-200",
   },
@@ -141,13 +141,13 @@ export default function RankingPage() {
                                 <p className={`text-sm font-bold uppercase tracking-[0.3em] ${style.place}`}>
                                   #{index + 1}
                                 </p>
-                                <p className="mt-3 truncate text-lg font-bold leading-tight text-white">
+                                <p className="mt-3 text-lg font-bold leading-tight text-white break-words">
                                   {entry.character}
                                 </p>
                                 <span
                                   role="link"
                                   tabIndex={0}
-                                  className="mt-2 block w-full cursor-pointer truncate text-sm text-red-300 underline underline-offset-2"
+                                  className="mt-2 block w-full cursor-pointer text-sm text-red-300 underline underline-offset-2 whitespace-normal break-all leading-tight"
                                   onClick={(event) =>
                                     handleUsernameClick(event, entry.username)
                                   }
@@ -173,21 +173,21 @@ export default function RankingPage() {
                         {remaining.map((entry, index) => (
                           <div
                             key={`${entry.username}-${entry.character}-${index}`}
-                            className="flex items-center justify-between gap-3 rounded-xl border border-red-900/40 bg-black/20 px-4 py-3"
+                            className="flex items-start justify-between gap-3 rounded-xl border border-red-900/40 bg-black/20 px-4 py-4"
                           >
                             <div className="min-w-0 pr-2">
                               <span className="font-bold text-red-300">
                                 #{index + 4}
                               </span>
                               <span className="mx-2 text-red-900/70">|</span>
-                              <span className="truncate text-white">{entry.character}</span>
+                              <span className="text-white break-words">{entry.character}</span>
                               <span className="text-gray-400">
                                 {" "}
                                 (
                                 <span
                                   role="link"
                                   tabIndex={0}
-                                  className="inline-block max-w-[150px] cursor-pointer truncate align-bottom text-red-400 underline"
+                                  className="inline cursor-pointer align-bottom text-red-400 underline break-all whitespace-normal"
                                   onClick={(event) =>
                                     handleUsernameClick(event, entry.username)
                                   }
