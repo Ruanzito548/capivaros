@@ -12,9 +12,9 @@ export const DAYS = [
 
 export const PERIODS = [
   { label: "Manhã", hours: "08 – 12h" },
-  { label: "Tarde", hours: "13 – 18h" },
-  { label: "Noite", hours: "19 – 00h" },
-  { label: "Madrugada", hours: "01 – 06h" },
+  { label: "Tarde", hours: "13 – 17h" },
+  { label: "Noite", hours: "19 – 23h" },
+  { label: "Madrugada", hours: "01 – 05h" },
 ];
 
 // availability[dayIndex][periodIndex] = true/false
@@ -53,7 +53,7 @@ export default function AvailabilityGrid({ value, onChange, readonly = false }: 
 
   return (
     <div className="w-full overflow-x-auto">
-      <table className="w-full border-collapse text-sm select-none">
+      <table className="border-collapse text-sm select-none min-w-[720px] table-fixed">
         <thead>
           <tr>
             <th className="w-28 pb-3 pr-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -62,7 +62,7 @@ export default function AvailabilityGrid({ value, onChange, readonly = false }: 
             {DAYS.map((day) => (
               <th
                 key={day}
-                className="pb-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider px-1"
+                className="w-20 pb-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider px-1"
               >
                 {day}
               </th>
@@ -88,13 +88,17 @@ export default function AvailabilityGrid({ value, onChange, readonly = false }: 
                       onClick={() => toggle(d, p)}
                       disabled={readonly}
                       className={[
-                        "h-10 w-full min-w-[36px] rounded-md border transition-all duration-150",
+                        "flex h-12 w-12 items-center justify-center rounded-md border text-lg transition-all duration-150 mx-auto",
                         readonly ? "cursor-default" : "cursor-pointer",
                         active
                           ? "border-red-600 bg-red-600/30 shadow-[0_0_8px_rgba(220,38,38,0.5)]"
                           : "border-red-900/40 bg-[#1c1c1c] hover:border-red-700 hover:bg-red-900/10",
                       ].join(" ")}
-                    />
+                    >
+                      <span aria-hidden="true" className={active ? "opacity-100" : "opacity-0"}>
+                        ✅
+                      </span>
+                    </button>
                   </td>
                 );
               })}
