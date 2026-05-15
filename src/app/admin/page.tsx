@@ -205,7 +205,7 @@ export default function AdminPage() {
               </p>
             </Link>
           )}
-          {isAdmin(role) && (
+          {canAccessWowAdmin(role) && (
             <Link
               href="/admin/disponibilidade"
               className="group bg-[#111] border border-red-800 rounded-xl p-8 hover:border-red-500 hover:shadow-[0_0_30px_rgba(255,0,0,0.5)] transition"

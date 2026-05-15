@@ -6,7 +6,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { isAdmin } from "@/lib/permissions";
+import { canAccessWowAdmin } from "@/lib/permissions";
 import { DAYS, PERIODS, flatToAvailability } from "@/components/availability-grid";
 
 interface PlayerResult {
@@ -27,7 +27,7 @@ export default function AdminDisponibilidade() {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) { router.push("/"); return; }
       const snap = await getDoc(doc(db, "users", user.uid));
-      if (!snap.exists() || !isAdmin(snap.data()?.role)) { router.push("/"); return; }
+      if (!snap.exists() || !canAccessWowAdmin(snap.data()?.role)) { router.push("/"); return; }
       setLoading(false);
     });
     return () => unsub();
