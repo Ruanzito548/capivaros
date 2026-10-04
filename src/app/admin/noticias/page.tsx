@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   collection,
-  addDoc,
   getDocs,
   deleteDoc,
   doc,
@@ -131,20 +130,44 @@ export default function NoticiasAdmin() {
         return;
       }
 
-      await addDoc(collection(db, "news"), {
-        title,
-        content,
-        image,
-        video,
-        createdAt: new Date(),
+      const user = auth.currentUser;
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      const token = await user.getIdToken();
+      const response = await fetch("/api/news", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, content, image, video }),
       });
+
+      const result = (await response.json()) as {
+        error?: string;
+        discordNotification?: { status?: string; message?: string };
+      };
+
+      if (!response.ok) {
+        throw new Error(result.error || "Erro ao publicar noticia.");
+      }
 
       resetForm();
       await fetchNews();
-      alert("Noticia publicada!");
+
+      if (result.discordNotification?.status === "sent") {
+        alert("Noticia publicada e enviada ao Discord!");
+      } else {
+        alert(
+          `Noticia publicada, mas nao enviada ao Discord. ${result.discordNotification?.message || "Confira a configuracao do bot."}`
+        );
+      }
     } catch (error) {
       console.error("Erro ao criar noticia:", error);
-      alert("Erro ao publicar.");
+      alert(error instanceof Error ? error.message : "Erro ao publicar.");
     }
   };
 

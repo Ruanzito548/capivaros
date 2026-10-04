@@ -412,6 +412,20 @@ export default function DiscordBotAdminPage() {
               </label>
 
               <label className="space-y-2">
+                <span className="text-sm text-gray-300">
+                  Canal de noticias da guilda
+                </span>
+                <input
+                  value={settings.guildNewsChannelId}
+                  onChange={(event) =>
+                    handleChange("guildNewsChannelId", event.target.value)
+                  }
+                  className="w-full rounded-xl border border-red-950 bg-[#140c0c] px-4 py-3 outline-none transition focus:border-red-500"
+                  placeholder="ID do canal que recebera as noticias"
+                />
+              </label>
+
+              <label className="space-y-2">
                 <span className="text-sm text-gray-300">Canal de logs</span>
                 <input
                   value={settings.logChannelId}

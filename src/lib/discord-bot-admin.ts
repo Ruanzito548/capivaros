@@ -3,6 +3,7 @@ export interface DiscordBotSettings {
   guildId: string;
   guildName: string;
   defaultChannelId: string;
+  guildNewsChannelId: string;
   logChannelId: string;
   moderatorRoleId: string;
   botClientId: string;
@@ -40,6 +41,7 @@ export const defaultDiscordBotSettings: DiscordBotSettings = {
   guildId: "",
   guildName: "",
   defaultChannelId: "",
+  guildNewsChannelId: "",
   logChannelId: "",
   moderatorRoleId: "",
   botClientId: "",
@@ -77,6 +79,7 @@ export function normalizeDiscordBotSettings(
     guildId: toTrimmedString(data.guildId),
     guildName: toTrimmedString(data.guildName),
     defaultChannelId: toTrimmedString(data.defaultChannelId),
+    guildNewsChannelId: toTrimmedString(data.guildNewsChannelId),
     logChannelId: toTrimmedString(data.logChannelId),
     moderatorRoleId: toTrimmedString(data.moderatorRoleId),
     botClientId: toTrimmedString(data.botClientId),
