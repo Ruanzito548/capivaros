@@ -60,6 +60,18 @@ const WOW_SPEC_ICONS = {
 
 export type WowCharacterClass = (typeof WOW_CLASS_DATA)[number]["name"];
 
+const WOW_CLASS_COLORS: Record<WowCharacterClass, string> = {
+  Druida: "#FF7D0A",
+  Caçador: "#AAD372",
+  Mago: "#3FC7EB",
+  Paladino: "#F48CBA",
+  Sacerdote: "#FFFFFF",
+  Ladino: "#FFF468",
+  Xamã: "#0070DD",
+  Bruxo: "#8788EE",
+  Guerreiro: "#C69B6D",
+};
+
 export const WOW_CHARACTER_CLASSES: readonly WowCharacterClass[] =
   WOW_CLASS_DATA.map((characterClass) => characterClass.name);
 
@@ -71,6 +83,10 @@ export function getWowClassFromLogsId(value: unknown): WowCharacterClass | null 
 export function isWowCharacterClass(value: unknown): value is WowCharacterClass {
   return typeof value === "string" &&
     WOW_CLASS_DATA.some((characterClass) => characterClass.name === value);
+}
+
+export function getWowClassColor(value: unknown): string | undefined {
+  return isWowCharacterClass(value) ? WOW_CLASS_COLORS[value] : undefined;
 }
 
 export function getWowSpecializations(characterClass: unknown): readonly string[] {

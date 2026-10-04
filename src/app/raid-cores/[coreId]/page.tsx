@@ -7,6 +7,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import WowSpecIcons from "@/components/wow-spec-icons";
 import { auth, db } from "@/lib/firebase";
+import { getWowClassColor } from "@/lib/wow-classes";
 import {
   isRaidCoreId,
   RAID_CORE_SIZES,
@@ -17,6 +18,8 @@ interface Character {
   name: string;
   server: string;
   characterClass?: string;
+  mainSpec?: string;
+  offSpec?: string | null;
 }
 
 interface CorePayload {
@@ -230,7 +233,10 @@ export default function RaidCorePage() {
                   key={signup.id}
                   className="rounded border border-red-900 bg-[#111] px-4 py-2 text-sm"
                 >
-                  {signup.characterName} · {signup.characterClass || "Classe pendente"} · Core {signup.coreId} · {signup.size}
+                  <span style={{ color: getWowClassColor(signup.characterClass) }}>
+                    {signup.characterName}
+                  </span>
+                  {` · ${signup.characterClass || "Classe pendente"} · Core ${signup.coreId} · ${signup.size}`}
                   {" pessoas · "}
                   {signup.status === "selected" ? `Grupo ${Math.ceil((signup.slot ?? 1) / 5)}` : "Aguardando"}
                 </li>
@@ -266,41 +272,66 @@ export default function RaidCorePage() {
                   </div>
 
                   {user && (
-                    <div className="flex flex-col gap-2 sm:min-w-80 sm:flex-row">
-                      <select
-                        aria-label={`Personagem para Core ${size}`}
-                        value={selectedCharacters[size] ?? ""}
-                        onChange={(event) =>
-                          setSelectedCharacters((current) => ({
-                            ...current,
-                            [size]: event.target.value,
-                          }))
-                        }
-                        className="min-w-0 flex-1 rounded-md border border-red-900 bg-[#111] px-3 py-2 text-white"
-                        disabled={characters.length === 0 || submittingSize !== null}
-                      >
-                        <option value="">
-                          {characters.length ? "Selecione personagem" : "Sem personagem aprovado"}
-                        </option>
-                        {characters.map((character) => {
-                          const identity = characterIdentity(character.name, character.server);
-                          const existingSignup = registeredCharacters.get(
-                            `${coreId}:${size}:${identity}`
-                          );
-                          return (
-                            <option
-                              key={identity}
-                              value={identity}
-                              disabled={Boolean(existingSignup)}
-                            >
-                              {character.name}
-                              {existingSignup
-                                ? ` · ja inscrito nesta raid`
-                                : ""}
-                            </option>
-                          );
-                        })}
-                      </select>
+                    <div className="flex min-w-0 flex-col gap-3 sm:w-full sm:max-w-md">
+                      {characters.length === 0 ? (
+                        <p className="text-sm text-gray-500">
+                          Nenhum personagem aprovado
+                        </p>
+                      ) : (
+                        <div
+                          role="group"
+                          aria-label={`Personagem para Core ${size}`}
+                          className="grid gap-2 sm:grid-cols-2"
+                        >
+                          {characters.map((character) => {
+                            const identity = characterIdentity(character.name, character.server);
+                            const existingSignup = registeredCharacters.get(
+                              `${coreId}:${size}:${identity}`
+                            );
+                            const isSelected = selectedCharacters[size] === identity;
+                            const disabled = Boolean(existingSignup) || submittingSize !== null;
+
+                            return (
+                              <button
+                                key={identity}
+                                type="button"
+                                aria-pressed={isSelected}
+                                disabled={disabled}
+                                onClick={() =>
+                                  setSelectedCharacters((current) => ({
+                                    ...current,
+                                    [size]: identity,
+                                  }))
+                                }
+                                className={`flex min-w-0 items-center justify-between gap-2 rounded-md border px-3 py-2 text-left transition ${
+                                  isSelected
+                                    ? "border-red-500 bg-red-950/60"
+                                    : "border-red-900 bg-[#111]"
+                                } disabled:cursor-not-allowed disabled:opacity-50`}
+                              >
+                                <span className="min-w-0 truncate">
+                                  <span
+                                    className="block truncate text-sm font-semibold text-white"
+                                    style={{ color: getWowClassColor(character.characterClass) }}
+                                  >
+                                    {character.name}
+                                  </span>
+                                  {existingSignup && (
+                                    <span className="block text-xs text-gray-500">
+                                      Ja inscrito nesta raid
+                                    </span>
+                                  )}
+                                </span>
+                                <WowSpecIcons
+                                  characterClass={character.characterClass}
+                                  mainSpec={character.mainSpec}
+                                  offSpec={character.offSpec}
+                                />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                       <button
                         type="button"
                         onClick={() => void handleSignup(size)}
@@ -339,7 +370,10 @@ export default function RaidCorePage() {
                             >
                               {member ? (
                                 <span className="flex min-w-0 w-full items-center justify-between gap-2">
-                                  <span className="font-semibold text-white">
+                                  <span
+                                    className="font-semibold text-white"
+                                    style={{ color: getWowClassColor(member.characterClass) }}
+                                  >
                                     {member.characterName}
                                   </span>
                                   <WowSpecIcons

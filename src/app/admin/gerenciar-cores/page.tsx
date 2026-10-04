@@ -13,6 +13,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { canAccessWowAdmin } from "@/lib/permissions";
+import { getWowClassColor } from "@/lib/wow-classes";
 import WowSpecIcons from "@/components/wow-spec-icons";
 import {
   RAID_CORE_IDS,
@@ -305,7 +306,10 @@ export default function ManageRaidCoresPage() {
                 return (
                   <DraggableSignup key={signup.id} signup={signup}>
                     <div className="border border-white/10 bg-[#141414] p-4 pr-10">
-                      <p className="font-semibold text-white">
+                      <p
+                        className="font-semibold text-white"
+                        style={{ color: getWowClassColor(signup.characterClass) }}
+                      >
                         {signup.characterName}
                       </p>
                       <SpecializationIcons signup={signup} />
@@ -407,7 +411,9 @@ function DroppableRaidSlot({
         <DraggableSignup signup={signup}>
           <span className="flex min-h-8 items-center justify-between gap-2 pr-6">
             <span className="min-w-0 truncate">
-              {signup.characterName}
+              <span style={{ color: getWowClassColor(signup.characterClass) }}>
+                {signup.characterName}
+              </span>
             </span>
             <SpecializationIcons signup={signup} />
             <button
