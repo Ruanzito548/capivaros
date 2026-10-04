@@ -15,7 +15,6 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { getRoleLabel } from "@/lib/permissions";
 import {
-  getWowClassFromLogsId,
   getWowSpecializations,
   isWowCharacterClass,
   isWowSpecialization,
@@ -59,8 +58,6 @@ export default function CharactersPage() {
   const [characterClass, setCharacterClass] = useState("");
   const [mainSpec, setMainSpec] = useState("");
   const [offSpec, setOffSpec] = useState("");
-  const [classLookupStatus, setClassLookupStatus] = useState("");
-  const [lookingUpClass, setLookingUpClass] = useState(false);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -173,41 +170,6 @@ export default function CharactersPage() {
     setLoadingLogs(false);
   }, [activeCharacter]);
 
-  const lookupCharacterClass = async () => {
-    const name = characterName.trim();
-    if (!name) return;
-
-    setLookingUpClass(true);
-    setClassLookupStatus("Buscando classe no Warcraft Logs...");
-
-    try {
-      const response = await fetch(
-        `/api/logs?name=${encodeURIComponent(name)}&server=${encodeURIComponent(server)}&region=${region}&zone=1047`
-      );
-      const data = (await response.json()) as { classID?: unknown };
-      const detectedClass = response.ok
-        ? getWowClassFromLogsId(data.classID)
-        : null;
-
-      if (detectedClass) {
-        setCharacterClass(detectedClass);
-        setMainSpec("");
-        setOffSpec("");
-        setClassLookupStatus(`Classe detectada: ${detectedClass}.`);
-      } else {
-        setClassLookupStatus(
-          "Classe nao encontrada nos logs. Selecione manualmente."
-        );
-      }
-    } catch {
-      setClassLookupStatus(
-        "Nao foi possivel consultar os logs. Selecione a classe manualmente."
-      );
-    } finally {
-      setLookingUpClass(false);
-    }
-  };
-
   const handleAddCharacter = async () => {
     if (!characterName.trim() || !user) return;
 
@@ -256,7 +218,6 @@ export default function CharactersPage() {
     setCharacterClass("");
     setMainSpec("");
     setOffSpec("");
-    setClassLookupStatus("");
     await refreshPendingRequests(user.uid);
   };
 
@@ -332,9 +293,7 @@ export default function CharactersPage() {
                 setCharacterClass("");
                 setMainSpec("");
                 setOffSpec("");
-                setClassLookupStatus("");
               }}
-              onBlur={() => void lookupCharacterClass()}
               className="min-w-0 p-3 bg-[#1c1c1c] border border-red-900 rounded-lg"
             />
 
@@ -346,10 +305,9 @@ export default function CharactersPage() {
                 setMainSpec("");
                 setOffSpec("");
               }}
-              disabled={lookingUpClass}
               className="min-w-0 p-3 bg-[#1c1c1c] border border-red-900 rounded-lg"
             >
-              <option value="">{lookingUpClass ? "Buscando classe..." : "Classe"}</option>
+              <option value="">Classe</option>
               {WOW_CHARACTER_CLASSES.map((className) => (
                 <option key={className} value={className}>{className}</option>
               ))}
@@ -390,16 +348,9 @@ export default function CharactersPage() {
                 ))}
             </select>
 
-            {classLookupStatus && (
-              <p className="text-sm text-gray-400 sm:col-span-2" role="status">
-                {classLookupStatus}
-              </p>
-            )}
-
             <button
               onClick={handleAddCharacter}
-              disabled={lookingUpClass}
-              className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg disabled:cursor-wait disabled:opacity-60 sm:col-span-2"
+              className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg sm:col-span-2"
             >
               Enviar para Aprovacao
             </button>

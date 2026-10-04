@@ -117,14 +117,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const body = (await request.json()) as Record<string, unknown>;
     const size = body.size;
-    const characterClass = body.characterClass;
     const characterName =
       typeof body.characterName === "string" ? body.characterName.trim() : "";
     const server = typeof body.server === "string" ? body.server.trim() : "";
 
     if (
       !isRaidCoreSize(size) ||
-      !isRaidCharacterClass(characterClass) ||
       !characterName ||
       !server
     ) {
@@ -138,9 +136,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const userSnapshot = await userRef.get();
     const userData = userSnapshot.data();
     const characters = Array.isArray(userData?.characters)
-      ? (userData.characters as Array<{ name?: unknown; server?: unknown }>)
+      ? (userData.characters as Array<{
+          name?: unknown;
+          server?: unknown;
+          characterClass?: unknown;
+        }>)
       : [];
-    const ownsCharacter = characters.some(
+    const ownedCharacter = characters.find(
       (character) =>
         typeof character.name === "string" &&
         typeof character.server === "string" &&
@@ -148,9 +150,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
         normalizeIdentity(character.server) === normalizeIdentity(server)
     );
 
-    if (!ownsCharacter) {
+    if (!ownedCharacter) {
       return NextResponse.json(
         { error: "O personagem precisa estar aprovado e vinculado a sua conta." },
+        { status: 400 }
+      );
+    }
+
+    const characterClass = ownedCharacter.characterClass;
+    if (!isRaidCharacterClass(characterClass)) {
+      return NextResponse.json(
+        { error: "Esse personagem ainda nao tem classe salva no perfil." },
         { status: 400 }
       );
     }
