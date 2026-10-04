@@ -19,9 +19,22 @@ function normalizeIdentity(value: string) {
   return value.trim().normalize("NFKC").toLocaleLowerCase("en-US");
 }
 
-function getCharacterSignupId(name: string, server: string) {
+function getLegacyCharacterSignupId(name: string, server: string) {
   return createHash("sha256")
     .update(`${normalizeIdentity(server)}:${normalizeIdentity(name)}`)
+    .digest("hex");
+}
+
+function getCharacterSignupId(
+  name: string,
+  server: string,
+  coreId: string,
+  size: number
+) {
+  return createHash("sha256")
+    .update(
+      `${normalizeIdentity(server)}:${normalizeIdentity(name)}:${coreId}:${size}`
+    )
     .digest("hex");
 }
 
@@ -175,33 +188,56 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const signupId = getCharacterSignupId(characterName, server);
-    const signupRef = adminDb.collection("raidCoreSignups").doc(signupId);
+    const signupsCollection = adminDb.collection("raidCoreSignups");
+    const signupRef = signupsCollection.doc(
+      getCharacterSignupId(characterName, server, coreId, size)
+    );
+    const legacySignupRef = signupsCollection.doc(
+      getLegacyCharacterSignupId(characterName, server)
+    );
 
     await adminDb.runTransaction(async (transaction) => {
-      const existingSignup = await transaction.get(signupRef);
-      if (existingSignup.exists) {
-        const existingCore = existingSignup.data()?.coreId;
-        if (isRaidCoreId(existingCore)) {
-          throw new Error("CHARACTER_ALREADY_REGISTERED");
-        }
+      const [existingSignup, legacySignup] = await Promise.all([
+        transaction.get(signupRef),
+        transaction.get(legacySignupRef),
+      ]);
 
-        transaction.set(signupRef, {
-          coreId,
-          size,
-          userId: decodedToken.uid,
-          username: userData?.username || decodedToken.name || "Membro",
-          characterName,
-          characterClass,
-          mainSpec,
-          offSpec: typeof offSpec === "string" ? offSpec : null,
-          server,
-          status: "pending",
-          slot: null,
-          appliedAt: Date.now(),
-          placedAt: null,
-        });
-        return;
+      if (existingSignup.exists) {
+        throw new Error("CHARACTER_ALREADY_REGISTERED");
+      }
+
+      let legacyMigrationRef: FirebaseFirestore.DocumentReference | null = null;
+      let legacyMigrationData: FirebaseFirestore.DocumentData | null = null;
+
+      if (legacySignup.exists) {
+        const legacyData = legacySignup.data() || {};
+        if (isRaidCoreId(legacyData.coreId) && isRaidCoreSize(legacyData.size)) {
+          if (legacyData.coreId === coreId && legacyData.size === size) {
+            throw new Error("CHARACTER_ALREADY_REGISTERED");
+          }
+
+          legacyMigrationRef = signupsCollection.doc(
+            getCharacterSignupId(
+              characterName,
+              server,
+              legacyData.coreId,
+              legacyData.size
+            )
+          );
+          legacyMigrationData = legacyData;
+        }
+      }
+
+      const legacyMigrationSnapshot = legacyMigrationRef
+        ? await transaction.get(legacyMigrationRef)
+        : null;
+
+      if (legacyMigrationRef && !legacyMigrationSnapshot?.exists && legacyMigrationData) {
+        transaction.create(legacyMigrationRef, legacyMigrationData);
+      }
+
+      if (legacySignup.exists) {
+        transaction.delete(legacySignupRef);
       }
 
       transaction.create(signupRef, {

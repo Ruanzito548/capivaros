@@ -179,7 +179,10 @@ export default function RaidCorePage() {
 
   const registeredCharacters = new Map(
     payload.mySignups.map((signup) => [
-      characterIdentity(signup.characterName, signup.server),
+      `${signup.coreId}:${signup.size}:${characterIdentity(
+        signup.characterName,
+        signup.server
+      )}`,
       signup,
     ])
   );
@@ -281,7 +284,9 @@ export default function RaidCorePage() {
                         </option>
                         {characters.map((character) => {
                           const identity = characterIdentity(character.name, character.server);
-                          const existingSignup = registeredCharacters.get(identity);
+                          const existingSignup = registeredCharacters.get(
+                            `${coreId}:${size}:${identity}`
+                          );
                           return (
                             <option
                               key={identity}
@@ -290,7 +295,7 @@ export default function RaidCorePage() {
                             >
                               {character.name}
                               {existingSignup
-                                ? ` · Core ${existingSignup.coreId}, ${existingSignup.size} pessoas`
+                                ? ` · ja inscrito nesta raid`
                                 : ""}
                             </option>
                           );
