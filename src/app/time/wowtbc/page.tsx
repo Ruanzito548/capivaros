@@ -69,7 +69,7 @@ export default function WowTbcPage() {
   return (
     <div className="min-h-screen bg-transparent text-white py-20 px-6">
       <h1 className="text-5xl font-bold text-center text-red-500 mb-16 drop-shadow-[0_0_15px_rgba(255,0,0,0.8)]">
-        World of Warcraft TBC Classic
+        WoW Forever
       </h1>
 
       {admins.length > 0 && (

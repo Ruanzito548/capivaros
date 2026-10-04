@@ -9,7 +9,7 @@ export default function TimePage() {
     {
       nome: "WoW Forever",
       imagem: "/wowforever.avif",
-      rota: "/time/wowtbc",
+      rota: "/time/wowforever",
     },
     // Descomente quando quiser reativar a pagina de LoL no seletor de time.
     // {

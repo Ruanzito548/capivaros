@@ -66,8 +66,8 @@ export default function Navbar() {
             Dashboard
           </Link>
 
-          <Link href="/time" className="hover:text-red-500 transition">
-            Time
+          <Link href="/time/wowforever" className="hover:text-red-500 transition">
+            Membros
           </Link>
 
           <Link href="/ranking" className="hover:text-red-500 transition">
@@ -140,8 +140,8 @@ export default function Navbar() {
             Dashboard
           </Link>
 
-          <Link href="/time" onClick={() => setMenuOpen(false)}>
-            Time
+          <Link href="/time/wowforever" onClick={() => setMenuOpen(false)}>
+            Membros
           </Link>
 
           <Link href="/ranking" onClick={() => setMenuOpen(false)}>
