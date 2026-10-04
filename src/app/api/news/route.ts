@@ -21,7 +21,7 @@ function serializeNews(doc: FirebaseFirestore.QueryDocumentSnapshot) {
 }
 
 type DiscordNotificationResult = {
-  status: "sent" | "skipped" | "failed";
+  status: "sent" | "partial" | "skipped" | "failed";
   message: string;
 };
 
@@ -114,28 +114,44 @@ async function sendNewsToDiscord(
     embed.thumbnail = { url: videoThumbnailUrl };
   }
 
-  const response = await fetch(
-    `https://discord.com/api/v10/channels/${encodeURIComponent(settings.guildNewsChannelId)}/messages`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bot ${botToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ...(videoUrl ? { content: videoUrl } : {}),
-        embeds: [embed],
-        allowed_mentions: { parse: [] },
-      }),
-      signal: AbortSignal.timeout(8000),
-    }
-  );
+  const channelMessagesUrl =
+    `https://discord.com/api/v10/channels/${encodeURIComponent(settings.guildNewsChannelId)}/messages`;
+  const headers = {
+    Authorization: `Bot ${botToken}`,
+    "Content-Type": "application/json",
+  };
+  const response = await fetch(channelMessagesUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ embeds: [embed], allowed_mentions: { parse: [] } }),
+    signal: AbortSignal.timeout(8000),
+  });
 
   if (!response.ok) {
     return {
       status: "failed",
       message: `O Discord recusou o envio (HTTP ${response.status}).`,
     };
+  }
+
+  if (videoUrl) {
+    const videoResponse = await fetch(channelMessagesUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        content: `Video da noticia: ${news.title.slice(0, 180)}\n${videoUrl}`,
+        allowed_mentions: { parse: [] },
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!videoResponse.ok) {
+      return {
+        status: "partial",
+        message:
+          "A noticia foi enviada, mas o link nao foi entregue para gerar a previa do video.",
+      };
+    }
   }
 
   return { status: "sent", message: "Noticia enviada ao Discord." };

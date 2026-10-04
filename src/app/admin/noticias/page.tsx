@@ -159,7 +159,14 @@ export default function NoticiasAdmin() {
       await fetchNews();
 
       if (result.discordNotification?.status === "sent") {
-        alert("Noticia publicada e enviada ao Discord!");
+        alert(
+          result.discordNotification.message ||
+            "Noticia publicada e enviada ao Discord!"
+        );
+      } else if (result.discordNotification?.status === "partial") {
+        alert(
+          `Noticia publicada e enviada ao Discord, mas a previa do video falhou. ${result.discordNotification.message || ""}`
+        );
       } else {
         alert(
           `Noticia publicada, mas nao enviada ao Discord. ${result.discordNotification?.message || "Confira a configuracao do bot."}`
