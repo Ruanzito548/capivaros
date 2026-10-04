@@ -60,16 +60,17 @@ async function sendNewsToDiscord(
     return { status: "skipped", message: "Configure o canal de noticias da guilda." };
   }
 
-  const description = news.content.length > 4000
-    ? `${news.content.slice(0, 3997)}...`
+  const guildName = (settings.guildName || "Capivaros").slice(0, 256);
+  const guildSignature = `**${guildName}**`;
+  const maxContentLength = 4096 - guildSignature.length - 2;
+  const newsDescription = news.content.length > maxContentLength
+    ? `${news.content.slice(0, maxContentLength - 3)}...`
     : news.content;
   const embed: Record<string, unknown> = {
     title: news.title.slice(0, 256),
-    description,
+    description: `${newsDescription}\n\n${guildSignature}`,
     url: new URL(`/news/${newsId}`, request.nextUrl.origin).href,
     color: 0xd92d20,
-    timestamp: new Date().toISOString(),
-    footer: { text: (settings.guildName || "Capivaros").slice(0, 256) },
   };
   const imageUrl = getHttpUrl(news.image);
   if (imageUrl) {
