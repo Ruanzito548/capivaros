@@ -42,7 +42,7 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 w-full bg-[#0b0b0b] border-b border-red-800 shadow-[0_4px_20px_rgba(255,0,0,0.2)] z-50">
       
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
+      <div className="max-w-7xl mx-auto grid grid-cols-[auto_1fr_auto] items-center px-6 py-4">
 
         {/* LOGO */}
         <Link href="/" className="group flex items-center gap-2">
@@ -56,7 +56,7 @@ export default function Navbar() {
         </Link>
 
         {/* MENU DESKTOP */}
-        <div className="hidden md:flex items-center gap-8 text-lg font-semibold tracking-wide">
+        <div className="hidden xl:flex items-center justify-center gap-8 text-xl font-semibold tracking-wide lg:text-3xl">
 
           <Link href="/" className="hover:text-red-500 transition">
             Home
@@ -93,6 +93,9 @@ export default function Navbar() {
             </Link>
           )}
 
+        </div>
+
+        <div className="hidden xl:flex items-center justify-end gap-4">
           {user ? (
             <>
               <Link
@@ -112,7 +115,7 @@ export default function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="bg-red-700 px-4 py-1 rounded hover:bg-red-800 transition"
+              className="bg-red-700 px-6 py-2 text-xl rounded hover:bg-red-800 transition"
             >
               Login
             </Link>
@@ -121,7 +124,7 @@ export default function Navbar() {
 
         {/* BOTÃO MOBILE */}
         <button
-          className="md:hidden text-white text-2xl"
+          className="xl:hidden justify-self-end text-white text-2xl"
           onClick={() => setMenuOpen(!menuOpen)}
         >
           ☰
@@ -130,7 +133,7 @@ export default function Navbar() {
 
       {/* MENU MOBILE */}
       {menuOpen && (
-        <div className="md:hidden bg-[#0b0b0b] border-t border-red-800 flex flex-col items-center gap-4 py-6 text-lg font-semibold">
+        <div className="xl:hidden bg-[#0b0b0b] border-t border-red-800 flex flex-col items-center gap-4 py-6 text-2xl font-semibold">
 
           <Link href="/" onClick={() => setMenuOpen(false)}>
             Home
@@ -187,7 +190,7 @@ export default function Navbar() {
             <Link
               href="/login"
               onClick={() => setMenuOpen(false)}
-              className="bg-red-700 px-4 py-1 rounded"
+              className="bg-red-700 px-6 py-2 text-2xl rounded"
             >
               Login
             </Link>
