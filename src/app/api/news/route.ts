@@ -122,7 +122,11 @@ async function sendNewsToDiscord(
         Authorization: `Bot ${botToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ embeds: [embed], allowed_mentions: { parse: [] } }),
+      body: JSON.stringify({
+        ...(videoUrl ? { content: videoUrl } : {}),
+        embeds: [embed],
+        allowed_mentions: { parse: [] },
+      }),
       signal: AbortSignal.timeout(8000),
     }
   );
