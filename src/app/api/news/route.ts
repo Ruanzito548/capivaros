@@ -34,6 +34,35 @@ function getHttpUrl(value: string) {
   }
 }
 
+function getYoutubeThumbnailUrl(value: string) {
+  try {
+    const url = new URL(value);
+    let videoId: string | null = null;
+
+    if (url.hostname === "youtu.be") {
+      videoId = url.pathname.split("/")[1] ?? null;
+    } else if (
+      url.hostname === "youtube.com" ||
+      url.hostname.endsWith(".youtube.com")
+    ) {
+      videoId = url.searchParams.get("v");
+
+      if (!videoId) {
+        const [pathType, pathVideoId] = url.pathname.split("/").slice(1);
+        if (["embed", "shorts", "live"].includes(pathType)) {
+          videoId = pathVideoId ?? null;
+        }
+      }
+    }
+
+    return videoId && /^[A-Za-z0-9_-]{11}$/.test(videoId)
+      ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 async function sendNewsToDiscord(
   request: NextRequest,
   newsId: string,
@@ -79,6 +108,10 @@ async function sendNewsToDiscord(
   const videoUrl = getHttpUrl(news.video);
   if (videoUrl) {
     embed.fields = [{ name: "Video", value: `[Assistir](${videoUrl})` }];
+  }
+  const videoThumbnailUrl = getYoutubeThumbnailUrl(news.video);
+  if (videoThumbnailUrl) {
+    embed.thumbnail = { url: videoThumbnailUrl };
   }
 
   const response = await fetch(
