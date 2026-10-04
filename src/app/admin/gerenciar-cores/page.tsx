@@ -1,6 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import {
+  DndContext,
+  useDraggable,
+  useDroppable,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import type { ReactNode } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -13,6 +20,20 @@ import {
 } from "@/lib/raid-cores";
 
 type SignupAction = "place" | "unplace" | "remove";
+
+interface SignupDragData {
+  signupId: string;
+  coreId: string;
+  size: number;
+  status: string;
+}
+
+interface SlotDropData {
+  coreId: string;
+  size: number;
+  slot: number;
+  occupantId: string | null;
+}
 
 export default function ManageRaidCoresPage() {
   const [signups, setSignups] = useState<RaidCoreSignup[]>([]);
@@ -81,7 +102,8 @@ export default function ManageRaidCoresPage() {
   const updateSignup = async (
     signup: RaidCoreSignup,
     action: SignupAction,
-    slot?: number
+    slot?: number,
+    swapSignupId?: string
   ) => {
     if (action === "remove" && !window.confirm(`Remover a inscricao de ${signup.characterName}?`)) {
       return;
@@ -105,7 +127,7 @@ export default function ManageRaidCoresPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ signupId: signup.id, action, slot }),
+        body: JSON.stringify({ signupId: signup.id, action, slot, swapSignupId }),
       });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) {
@@ -115,7 +137,9 @@ export default function ManageRaidCoresPage() {
       await fetchSignups();
       setFeedback(
         action === "place"
-          ? `${signup.characterName} adicionado a composicao.`
+          ? swapSignupId
+            ? "Posicoes trocadas na composicao."
+            : `${signup.characterName} adicionado a composicao.`
           : action === "unplace"
             ? `${signup.characterName} voltou para a fila.`
             : `Inscricao de ${signup.characterName} removida.`
@@ -131,6 +155,32 @@ export default function ManageRaidCoresPage() {
     }
   };
 
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over) return;
+
+    const dragData = active.data.current as SignupDragData | undefined;
+    const slotData = over.data.current as SlotDropData | undefined;
+    const signup = signups.find((entry) => entry.id === dragData?.signupId);
+
+    if (!dragData || !slotData || !signup) return;
+    if (dragData.coreId !== slotData.coreId || dragData.size !== slotData.size) {
+      setError("O personagem so pode ser movido dentro do mesmo core e tamanho.");
+      return;
+    }
+    if (slotData.occupantId === signup.id) return;
+    if (slotData.occupantId && signup.status !== "selected") {
+      setError("Solte o inscrito em uma vaga vazia.");
+      return;
+    }
+
+    void updateSignup(
+      signup,
+      "place",
+      slotData.slot,
+      slotData.occupantId ?? undefined
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center text-red-400">
@@ -140,6 +190,7 @@ export default function ManageRaidCoresPage() {
   }
 
   return (
+    <DndContext onDragEnd={handleDragEnd}>
     <div className="min-h-screen bg-transparent px-6 py-16 text-white">
       <div className="mx-auto max-w-7xl">
         <button
@@ -208,32 +259,17 @@ export default function ManageRaidCoresPage() {
                                 const slot = groupIndex * 5 + memberIndex + 1;
                                 const signup = placed.find((entry) => entry.slot === slot);
                                 return (
-                                  <li
+                                  <DroppableRaidSlot
                                     key={slot}
-                                    className="flex min-h-9 items-center justify-between gap-2 border border-white/10 bg-[#151515] px-2 text-xs"
-                                  >
-                                    {signup ? (
-                                      <>
-                                        <span className="min-w-0 truncate">
-                                          {signup.characterName}
-                                          <span className="ml-1 text-gray-500">
-                                            {signup.username}
-                                          </span>
-                                        </span>
-                                        <button
-                                          type="button"
-                                          title="Desalocar e devolver a inscricao para a fila"
-                                          onClick={() => void updateSignup(signup, "unplace")}
-                                          disabled={savingId !== null}
-                                          className="shrink-0 text-amber-300 hover:text-amber-200 disabled:opacity-50"
-                                        >
-                                          Desalocar
-                                        </button>
-                                      </>
-                                    ) : (
-                                      <span className="text-gray-600">Vaga {slot}</span>
-                                    )}
-                                  </li>
+                                    coreId={coreId}
+                                    size={size}
+                                    slot={slot}
+                                    signup={signup}
+                                    disabled={savingId !== null}
+                                    onUnplace={() => {
+                                      if (signup) void updateSignup(signup, "unplace");
+                                    }}
+                                  />
                                 );
                               })}
                             </ol>
@@ -260,10 +296,8 @@ export default function ManageRaidCoresPage() {
                                 slotSelections[signup.id] ?? availableSlots[0] ?? "";
 
                               return (
-                                <div
-                                  key={signup.id}
-                                  className="border border-white/10 bg-[#141414] p-3"
-                                >
+                                <DraggableSignup key={signup.id} signup={signup}>
+                                  <div className="border border-white/10 bg-[#141414] p-3">
                                   <p className="mb-1 font-semibold text-white">
                                     {signup.characterName}
                                   </p>
@@ -312,7 +346,8 @@ export default function ManageRaidCoresPage() {
                                       Remover
                                     </button>
                                   </div>
-                                </div>
+                                  </div>
+                                </DraggableSignup>
                               );
                             })}
                           </div>
@@ -327,5 +362,112 @@ export default function ManageRaidCoresPage() {
         </div>
       </div>
     </div>
+    </DndContext>
+  );
+}
+
+function DraggableSignup({
+  signup,
+  children,
+}: {
+  signup: RaidCoreSignup;
+  children: ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
+    useDraggable({
+      id: `signup-${signup.id}`,
+      data: {
+        signupId: signup.id,
+        coreId: signup.coreId,
+        size: signup.size,
+        status: signup.status,
+      } satisfies SignupDragData,
+    });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={
+        transform
+          ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+          : undefined
+      }
+      className={`relative ${isDragging ? "z-20 opacity-50" : ""}`}
+    >
+      <button
+        ref={setActivatorNodeRef}
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label={`Arrastar ${signup.characterName}`}
+        title="Arraste para uma vaga da composição"
+        className="absolute right-2 top-2 z-10 cursor-grab touch-none text-lg leading-none text-gray-400 hover:text-white active:cursor-grabbing"
+      >
+        ⠿
+      </button>
+      {children}
+    </div>
+  );
+}
+
+function DroppableRaidSlot({
+  coreId,
+  size,
+  slot,
+  signup,
+  disabled,
+  onUnplace,
+}: {
+  coreId: RaidCoreSignup["coreId"];
+  size: RaidCoreSignup["size"];
+  slot: number;
+  signup: RaidCoreSignup | undefined;
+  disabled: boolean;
+  onUnplace: () => void;
+}) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: `slot-${coreId}-${size}-${slot}`,
+    data: {
+      coreId,
+      size,
+      slot,
+      occupantId: signup?.id ?? null,
+    } satisfies SlotDropData,
+    disabled,
+  });
+
+  return (
+    <li
+      ref={setNodeRef}
+      className={`flex min-h-9 items-center justify-between gap-2 border px-2 text-xs transition-colors ${
+        isOver
+          ? "border-red-400 bg-red-950/70"
+          : signup
+            ? "border-white/10 bg-[#151515]"
+            : "border-white/10 bg-[#111]"
+      }`}
+    >
+      {signup ? (
+        <DraggableSignup signup={signup}>
+          <span className="flex min-h-8 items-center justify-between gap-2 pr-6">
+            <span className="min-w-0 truncate">
+              {signup.characterName}
+              <span className="ml-1 text-gray-500">{signup.username}</span>
+            </span>
+            <button
+              type="button"
+              title="Desalocar e devolver a inscricao para a fila"
+              onClick={onUnplace}
+              disabled={disabled}
+              className="shrink-0 text-amber-300 hover:text-amber-200 disabled:opacity-50"
+            >
+              Desalocar
+            </button>
+          </span>
+        </DraggableSignup>
+      ) : (
+        <span className="text-gray-600">Vaga {slot}</span>
+      )}
+    </li>
   );
 }

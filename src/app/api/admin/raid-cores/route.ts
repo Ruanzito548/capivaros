@@ -62,6 +62,7 @@ export async function PATCH(request: NextRequest) {
       signupId?: unknown;
       action?: unknown;
       slot?: unknown;
+      swapSignupId?: unknown;
     };
     const signupId = typeof body.signupId === "string" ? body.signupId : "";
     const action = body.action;
@@ -91,6 +92,8 @@ export async function PATCH(request: NextRequest) {
     }
 
     const slot = body.slot;
+    const swapSignupId =
+      typeof body.swapSignupId === "string" ? body.swapSignupId : null;
     if (typeof slot !== "number" || !Number.isInteger(slot)) {
       return NextResponse.json({ error: "Invalid composition slot" }, { status: 400 });
     }
@@ -115,7 +118,7 @@ export async function PATCH(request: NextRequest) {
         .collection("raidCoreSignups")
         .where("coreId", "==", signup.coreId);
       const coreSignupsSnapshot = await transaction.get(coreSignupsQuery);
-      const isSlotOccupied = coreSignupsSnapshot.docs.some((document) => {
+      const occupyingSignup = coreSignupsSnapshot.docs.find((document) => {
         if (document.id === signupId) return false;
         const data = document.data();
         return (
@@ -125,8 +128,32 @@ export async function PATCH(request: NextRequest) {
         );
       });
 
-      if (isSlotOccupied) {
-        throw new Error("RAID_CORE_SLOT_TAKEN");
+      if (occupyingSignup) {
+        if (
+          occupyingSignup.id !== swapSignupId ||
+          signup.status !== "selected" ||
+          typeof signup.slot !== "number"
+        ) {
+          throw new Error("RAID_CORE_SLOT_TAKEN");
+        }
+
+        const occupyingSignupSnapshot = await transaction.get(occupyingSignup.ref);
+        const occupyingSignupData = occupyingSignupSnapshot.data();
+        if (
+          !occupyingSignupSnapshot.exists ||
+          occupyingSignupData?.status !== "selected" ||
+          occupyingSignupData?.coreId !== signup.coreId ||
+          occupyingSignupData?.size !== signup.size ||
+          occupyingSignupData?.slot !== slot
+        ) {
+          throw new Error("RAID_CORE_SLOT_TAKEN");
+        }
+
+        transaction.update(occupyingSignup.ref, {
+          slot: signup.slot,
+          placedAt: Date.now(),
+          placedBy: decodedToken.uid,
+        });
       }
 
       transaction.update(signupRef, {
