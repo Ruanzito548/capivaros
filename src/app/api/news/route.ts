@@ -23,6 +23,8 @@ function serializeNews(doc: FirebaseFirestore.QueryDocumentSnapshot) {
 type DiscordNotificationResult = {
   status: "sent" | "partial" | "skipped" | "failed";
   message: string;
+  channelId?: string;
+  messageIds?: string[];
 };
 
 function getHttpUrl(value: string) {
@@ -99,6 +101,12 @@ async function sendNewsToDiscord(
     };
   }
 
+  const firstMessage = (await response.json().catch(() => null)) as
+    | { id?: unknown }
+    | null;
+  const messageIds =
+    typeof firstMessage?.id === "string" ? [firstMessage.id] : [];
+
   if (videoUrl) {
     const videoResponse = await fetch(channelMessagesUrl, {
       method: "POST",
@@ -115,11 +123,25 @@ async function sendNewsToDiscord(
         status: "partial",
         message:
           "A noticia foi enviada, mas o link nao foi entregue para gerar a previa do video.",
+        channelId: settings.guildNewsChannelId,
+        messageIds,
       };
+    }
+
+    const videoMessage = (await videoResponse.json().catch(() => null)) as
+      | { id?: unknown }
+      | null;
+    if (typeof videoMessage?.id === "string") {
+      messageIds.push(videoMessage.id);
     }
   }
 
-  return { status: "sent", message: "Noticia enviada ao Discord." };
+  return {
+    status: "sent",
+    message: "Noticia enviada ao Discord.",
+    channelId: settings.guildNewsChannelId,
+    messageIds,
+  };
 }
 
 async function authenticateNewsPublisher(request: NextRequest) {
@@ -189,6 +211,26 @@ export async function POST(request: NextRequest) {
       };
     }
 
+    if (
+      discordNotification.channelId &&
+      discordNotification.messageIds?.length
+    ) {
+      try {
+        await newsDocument.update({
+          discordMessages: {
+            channelId: discordNotification.channelId,
+            messageIds: discordNotification.messageIds,
+          },
+        });
+      } catch {
+        discordNotification = {
+          ...discordNotification,
+          status: "partial",
+          message: `${discordNotification.message} Nao foi possivel salvar as referencias das mensagens para exclusao automatica.`,
+        };
+      }
+    }
+
     try {
       await adminDb.collection("discordBotLogs").add({
         action: `news_${discordNotification.status}`,
@@ -204,7 +246,13 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { id: newsDocument.id, discordNotification },
+      {
+        id: newsDocument.id,
+        discordNotification: {
+          status: discordNotification.status,
+          message: discordNotification.message,
+        },
+      },
       { status: 201 }
     );
   } catch (error: unknown) {

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
   collection,
   getDocs,
-  deleteDoc,
   doc,
   orderBy,
   query,
@@ -206,8 +205,35 @@ export default function NoticiasAdmin() {
   const deleteNews = async (id: string) => {
     if (!confirm("Excluir essa noticia?")) return;
 
-    await deleteDoc(doc(db, "news", id));
-    await fetchNews();
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      const token = await user.getIdToken();
+      const response = await fetch(`/api/news/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = (await response.json()) as {
+        error?: string;
+        discordDeletion?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(result.error || "Erro ao excluir noticia.");
+      }
+
+      await fetchNews();
+      if (result.discordDeletion === "not_tracked") {
+        alert("Noticia excluida do site. Ela nao tinha mensagem do Discord vinculada.");
+      }
+    } catch (error) {
+      console.error("Erro ao excluir noticia:", error);
+      alert(error instanceof Error ? error.message : "Erro ao excluir noticia.");
+    }
   };
 
   if (loading) {
