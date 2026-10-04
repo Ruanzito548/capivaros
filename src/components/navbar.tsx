@@ -70,6 +70,10 @@ export default function Navbar() {
             Membros
           </Link>
 
+          <Link href="/cores" className="hover:text-red-500 transition">
+            Cores
+          </Link>
+
           <Link href="/ranking" className="hover:text-red-500 transition">
             Ranking
           </Link>
@@ -145,6 +149,10 @@ export default function Navbar() {
 
           <Link href="/time/wowforever" onClick={() => setMenuOpen(false)}>
             Membros
+          </Link>
+
+          <Link href="/cores" onClick={() => setMenuOpen(false)}>
+            Cores
           </Link>
 
           <Link href="/ranking" onClick={() => setMenuOpen(false)}>
