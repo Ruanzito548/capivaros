@@ -1,0 +1,27 @@
+export const RAID_CORE_IDS = ["1", "2", "3"] as const;
+export const RAID_CORE_SIZES = [40, 20, 10] as const;
+
+export type RaidCoreId = (typeof RAID_CORE_IDS)[number];
+export type RaidCoreSize = (typeof RAID_CORE_SIZES)[number];
+
+export interface RaidCoreSignup {
+  id: string;
+  coreId: RaidCoreId;
+  size: RaidCoreSize;
+  userId: string;
+  username: string;
+  characterName: string;
+  server: string;
+  status: "pending" | "selected";
+  slot: number | null;
+  appliedAt: number;
+  placedAt: number | null;
+}
+
+export function isRaidCoreId(value: unknown): value is RaidCoreId {
+  return typeof value === "string" && RAID_CORE_IDS.includes(value as RaidCoreId);
+}
+
+export function isRaidCoreSize(value: unknown): value is RaidCoreSize {
+  return typeof value === "number" && RAID_CORE_SIZES.includes(value as RaidCoreSize);
+}

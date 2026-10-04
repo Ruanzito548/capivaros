@@ -70,7 +70,7 @@ export default function Navbar() {
             Membros
           </Link>
 
-          <Link href="/cores" className="hover:text-red-500 transition">
+          <Link href="/raid-cores" className="hover:text-red-500 transition">
             Cores
           </Link>
 
@@ -151,7 +151,7 @@ export default function Navbar() {
             Membros
           </Link>
 
-          <Link href="/cores" onClick={() => setMenuOpen(false)}>
+          <Link href="/raid-cores" onClick={() => setMenuOpen(false)}>
             Cores
           </Link>
 

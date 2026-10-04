@@ -1,6 +1,8 @@
-const cores = ["Core Hardcore", "Core 1", "Core 2", "Core 3"];
+import Link from "next/link";
 
-export default function CoresPage() {
+const cores = ["1", "2", "3"];
+
+export default function RaidCoresPage() {
   return (
     <div className="min-h-screen bg-transparent px-6 py-16 text-white">
       <div className="mx-auto max-w-6xl">
@@ -8,14 +10,15 @@ export default function CoresPage() {
           Cores
         </h1>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {cores.map((core) => (
-            <section
+            <Link
               key={core}
+              href={`/raid-cores/${core}`}
               className="rounded-md border border-red-900 bg-[#111] p-6 text-center shadow-[0_0_18px_rgba(255,0,0,0.16)]"
             >
-              <h2 className="text-2xl font-semibold text-red-400">{core}</h2>
-            </section>
+              <h2 className="text-2xl font-semibold text-red-400">Core {core}</h2>
+            </Link>
           ))}
         </div>
       </div>
