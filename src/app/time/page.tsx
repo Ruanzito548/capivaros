@@ -7,8 +7,8 @@ export default function TimePage() {
 
   const jogos = [
     {
-      nome: "World of Warcraft TBC Classic",
-      imagem: "/wow.jpg",
+      nome: "WoW Forever",
+      imagem: "/wowforever.avif",
       rota: "/time/wowtbc",
     },
     // Descomente quando quiser reativar a pagina de LoL no seletor de time.
