@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const cores = ["1", "2", "3"];
+const cores = ["1"];
 
 export default function RaidCoresPage() {
   return (
@@ -10,7 +10,7 @@ export default function RaidCoresPage() {
           Cores
         </h1>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto grid max-w-md gap-5">
           {cores.map((core) => (
             <Link
               key={core}

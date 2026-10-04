@@ -1,4 +1,4 @@
-export const RAID_CORE_IDS = ["1", "2", "3"] as const;
+export const RAID_CORE_IDS = ["1"] as const;
 export const RAID_CORE_SIZES = [40, 20, 10] as const;
 
 export type RaidCoreId = (typeof RAID_CORE_IDS)[number];

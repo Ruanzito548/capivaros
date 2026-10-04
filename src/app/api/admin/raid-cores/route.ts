@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { canAccessWowAdmin } from "@/lib/permissions";
-import { isRaidCoreId, isRaidCoreSize } from "@/lib/raid-cores";
+import {
+  isRaidCoreId,
+  isRaidCoreSize,
+} from "@/lib/raid-cores";
 
 export const runtime = "nodejs";
 
@@ -39,9 +42,12 @@ export async function GET(request: NextRequest) {
     const signups = snapshot.docs.map((document) => ({
       id: document.id,
       ...document.data(),
-    }));
+    })) as Array<{ id: string; coreId?: unknown }>;
+    const validSignups = signups.filter((signup) =>
+      isRaidCoreId(signup.coreId)
+    );
 
-    return NextResponse.json(signups);
+    return NextResponse.json(validSignups);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(

@@ -72,7 +72,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
       id: document.id,
       ...document.data(),
     })) as RaidCoreSignup[];
-    const roster = signups
+    const validCoreSignups = signups.filter((signup) =>
+      isRaidCoreId(signup.coreId)
+    );
+    const roster = validCoreSignups
       .filter((signup) => signup.status === "selected" && signup.slot !== null)
       .sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0));
 
@@ -82,10 +85,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
         .collection("raidCoreSignups")
         .where("userId", "==", userId)
         .get();
-      mySignups = userSnapshot.docs.map((document) => ({
+      const userSignups = userSnapshot.docs.map((document) => ({
         id: document.id,
         ...document.data(),
       })) as RaidCoreSignup[];
+      mySignups = userSignups.filter((signup) => isRaidCoreId(signup.coreId));
     }
 
     return NextResponse.json({ coreId, roster, mySignups });
@@ -150,7 +154,24 @@ export async function POST(request: NextRequest, context: RouteContext) {
     await adminDb.runTransaction(async (transaction) => {
       const existingSignup = await transaction.get(signupRef);
       if (existingSignup.exists) {
-        throw new Error("CHARACTER_ALREADY_REGISTERED");
+        const existingCore = existingSignup.data()?.coreId;
+        if (isRaidCoreId(existingCore)) {
+          throw new Error("CHARACTER_ALREADY_REGISTERED");
+        }
+
+        transaction.set(signupRef, {
+          coreId,
+          size,
+          userId: decodedToken.uid,
+          username: userData?.username || decodedToken.name || "Membro",
+          characterName,
+          server,
+          status: "pending",
+          slot: null,
+          appliedAt: Date.now(),
+          placedAt: null,
+        });
+        return;
       }
 
       transaction.create(signupRef, {
