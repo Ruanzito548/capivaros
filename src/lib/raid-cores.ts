@@ -1,20 +1,16 @@
+import {
+  isWowCharacterClass,
+  WOW_CHARACTER_CLASSES,
+  type WowCharacterClass,
+} from "@/lib/wow-classes";
+
 export const RAID_CORE_IDS = ["1"] as const;
 export const RAID_CORE_SIZES = [40, 20, 10] as const;
-export const RAID_CHARACTER_CLASSES = [
-  "Druida",
-  "Caçador",
-  "Mago",
-  "Paladino",
-  "Sacerdote",
-  "Ladino",
-  "Xamã",
-  "Bruxo",
-  "Guerreiro",
-] as const;
+export const RAID_CHARACTER_CLASSES = WOW_CHARACTER_CLASSES;
 
 export type RaidCoreId = (typeof RAID_CORE_IDS)[number];
 export type RaidCoreSize = (typeof RAID_CORE_SIZES)[number];
-export type RaidCharacterClass = (typeof RAID_CHARACTER_CLASSES)[number];
+export type RaidCharacterClass = WowCharacterClass;
 
 export interface RaidCoreSignup {
   id: string;
@@ -40,6 +36,5 @@ export function isRaidCoreSize(value: unknown): value is RaidCoreSize {
 }
 
 export function isRaidCharacterClass(value: unknown): value is RaidCharacterClass {
-  return typeof value === "string" &&
-    RAID_CHARACTER_CLASSES.includes(value as RaidCharacterClass);
+  return isWowCharacterClass(value);
 }

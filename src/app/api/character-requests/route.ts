@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Timestamp } from "firebase-admin/firestore";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import {
+  isWowCharacterClass,
+  isWowSpecialization,
+} from "@/lib/wow-classes";
 
 export const runtime = "nodejs";
 
@@ -71,11 +75,22 @@ export async function POST(request: NextRequest) {
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const server = typeof body.server === "string" ? body.server.trim() : "";
     const region = typeof body.region === "string" ? body.region.trim() : "";
+    const characterClass = body.characterClass;
+    const mainSpec = body.mainSpec;
+    const offSpec = body.offSpec;
     const setAsMainCharacter = Boolean(body.setAsMainCharacter);
 
-    if (!name || !server || !region) {
+    if (
+      !name ||
+      !server ||
+      !region ||
+      !isWowCharacterClass(characterClass) ||
+      !isWowSpecialization(characterClass, mainSpec) ||
+      (offSpec !== undefined && offSpec !== null && offSpec !== "" &&
+        (!isWowSpecialization(characterClass, offSpec) || offSpec === mainSpec))
+    ) {
       return NextResponse.json(
-        { error: "Name, server, and region are required" },
+        { error: "Personagem, classe e main spec validos sao obrigatorios." },
         { status: 400 }
       );
     }
@@ -115,6 +130,9 @@ export async function POST(request: NextRequest) {
       name,
       server,
       region,
+      characterClass,
+      mainSpec,
+      offSpec: typeof offSpec === "string" && offSpec ? offSpec : null,
       status: "pending",
       createdAt: Timestamp.now(),
     });

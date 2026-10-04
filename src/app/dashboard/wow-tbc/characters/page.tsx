@@ -14,16 +14,29 @@ import {
 import { onAuthStateChanged, User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { getRoleLabel } from "@/lib/permissions";
+import {
+  getWowClassFromLogsId,
+  getWowSpecializations,
+  isWowCharacterClass,
+  isWowSpecialization,
+  WOW_CHARACTER_CLASSES,
+} from "@/lib/wow-classes";
 
 interface Character {
   name: string;
   server: string;
+  characterClass?: string;
+  mainSpec?: string;
+  offSpec?: string;
 }
 
 interface PendingRequest {
   id: string;
   name: string;
   server: string;
+  characterClass?: string;
+  mainSpec?: string;
+  offSpec?: string;
 }
 
 interface ProfileData {
@@ -43,6 +56,11 @@ interface LogsData {
 export default function CharactersPage() {
   const [user, setUser] = useState<User | null>(null);
   const [characterName, setCharacterName] = useState("");
+  const [characterClass, setCharacterClass] = useState("");
+  const [mainSpec, setMainSpec] = useState("");
+  const [offSpec, setOffSpec] = useState("");
+  const [classLookupStatus, setClassLookupStatus] = useState("");
+  const [lookingUpClass, setLookingUpClass] = useState(false);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -155,8 +173,53 @@ export default function CharactersPage() {
     setLoadingLogs(false);
   }, [activeCharacter]);
 
+  const lookupCharacterClass = async () => {
+    const name = characterName.trim();
+    if (!name) return;
+
+    setLookingUpClass(true);
+    setClassLookupStatus("Buscando classe no Warcraft Logs...");
+
+    try {
+      const response = await fetch(
+        `/api/logs?name=${encodeURIComponent(name)}&server=${encodeURIComponent(server)}&region=${region}&zone=1047`
+      );
+      const data = (await response.json()) as { classID?: unknown };
+      const detectedClass = response.ok
+        ? getWowClassFromLogsId(data.classID)
+        : null;
+
+      if (detectedClass) {
+        setCharacterClass(detectedClass);
+        setMainSpec("");
+        setOffSpec("");
+        setClassLookupStatus(`Classe detectada: ${detectedClass}.`);
+      } else {
+        setClassLookupStatus(
+          "Classe nao encontrada nos logs. Selecione manualmente."
+        );
+      }
+    } catch {
+      setClassLookupStatus(
+        "Nao foi possivel consultar os logs. Selecione a classe manualmente."
+      );
+    } finally {
+      setLookingUpClass(false);
+    }
+  };
+
   const handleAddCharacter = async () => {
     if (!characterName.trim() || !user) return;
+
+    if (
+      !isWowCharacterClass(characterClass) ||
+      !isWowSpecialization(characterClass, mainSpec) ||
+      (offSpec &&
+        (!isWowSpecialization(characterClass, offSpec) || offSpec === mainSpec))
+    ) {
+      alert("Selecione uma classe e main spec validas. A off spec e opcional.");
+      return;
+    }
 
     const name = characterName.trim();
 
@@ -176,6 +239,9 @@ export default function CharactersPage() {
         name,
         server,
         region,
+        characterClass,
+        mainSpec,
+        offSpec: offSpec || null,
       }),
     });
 
@@ -187,6 +253,10 @@ export default function CharactersPage() {
 
     alert("Personagem enviado para aprovacao.");
     setCharacterName("");
+    setCharacterClass("");
+    setMainSpec("");
+    setOffSpec("");
+    setClassLookupStatus("");
     await refreshPendingRequests(user.uid);
   };
 
@@ -252,18 +322,84 @@ export default function CharactersPage() {
 
       <div className="w-full max-w-6xl space-y-10 px-6 pt-20">
         <div className="w-full max-w-3xl bg-[#141414] border border-red-900 rounded-2xl p-8 mx-auto">
-          <div className="flex gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <input
               type="text"
               placeholder="Nome do Personagem"
               value={characterName}
-              onChange={(e) => setCharacterName(e.target.value)}
-              className="flex-1 p-3 bg-[#1c1c1c] border border-red-900 rounded-lg"
+              onChange={(event) => {
+                setCharacterName(event.target.value);
+                setCharacterClass("");
+                setMainSpec("");
+                setOffSpec("");
+                setClassLookupStatus("");
+              }}
+              onBlur={() => void lookupCharacterClass()}
+              className="min-w-0 p-3 bg-[#1c1c1c] border border-red-900 rounded-lg"
             />
+
+            <select
+              aria-label="Classe do personagem"
+              value={characterClass}
+              onChange={(event) => {
+                setCharacterClass(event.target.value);
+                setMainSpec("");
+                setOffSpec("");
+              }}
+              disabled={lookingUpClass}
+              className="min-w-0 p-3 bg-[#1c1c1c] border border-red-900 rounded-lg"
+            >
+              <option value="">{lookingUpClass ? "Buscando classe..." : "Classe"}</option>
+              {WOW_CHARACTER_CLASSES.map((className) => (
+                <option key={className} value={className}>{className}</option>
+              ))}
+            </select>
+
+            <select
+              aria-label="Main spec"
+              value={mainSpec}
+              onChange={(event) => {
+                setMainSpec(event.target.value);
+                if (event.target.value === offSpec) setOffSpec("");
+              }}
+              disabled={!characterClass}
+              className="min-w-0 p-3 bg-[#1c1c1c] border border-red-900 rounded-lg"
+            >
+              <option value="">Main spec</option>
+              {getWowSpecializations(characterClass).map((specialization) => (
+                <option key={specialization} value={specialization}>
+                  {specialization}
+                </option>
+              ))}
+            </select>
+
+            <select
+              aria-label="Off spec"
+              value={offSpec}
+              onChange={(event) => setOffSpec(event.target.value)}
+              disabled={!characterClass}
+              className="min-w-0 p-3 bg-[#1c1c1c] border border-red-900 rounded-lg"
+            >
+              <option value="">Off spec (opcional)</option>
+              {getWowSpecializations(characterClass)
+                .filter((specialization) => specialization !== mainSpec)
+                .map((specialization) => (
+                  <option key={specialization} value={specialization}>
+                    {specialization}
+                  </option>
+                ))}
+            </select>
+
+            {classLookupStatus && (
+              <p className="text-sm text-gray-400 sm:col-span-2" role="status">
+                {classLookupStatus}
+              </p>
+            )}
 
             <button
               onClick={handleAddCharacter}
-              className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg"
+              disabled={lookingUpClass}
+              className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg disabled:cursor-wait disabled:opacity-60 sm:col-span-2"
             >
               Enviar para Aprovacao
             </button>
@@ -284,7 +420,10 @@ export default function CharactersPage() {
                 <div>
                   <p className="text-lg font-bold text-yellow-400">{req.name}</p>
                   <p className="text-sm text-gray-400">
-                    Servidor: {req.server} | Status: Pendente
+                    {req.characterClass || "Classe pendente"}
+                    {req.mainSpec ? ` · Main: ${req.mainSpec}` : ""}
+                    {req.offSpec ? ` · Off: ${req.offSpec}` : ""}
+                    {` · Servidor: ${req.server} · Status: Pendente`}
                   </p>
                 </div>
 
@@ -330,6 +469,14 @@ export default function CharactersPage() {
                   <h2 className="text-2xl font-bold text-red-400">
                     {activeCharacter.name}
                   </h2>
+
+                  {(activeCharacter.characterClass || activeCharacter.mainSpec || activeCharacter.offSpec) && (
+                    <p className="mt-1 text-sm text-gray-400">
+                      {activeCharacter.characterClass || "Classe"}
+                      {activeCharacter.mainSpec ? ` · Main: ${activeCharacter.mainSpec}` : ""}
+                      {activeCharacter.offSpec ? ` · Off: ${activeCharacter.offSpec}` : ""}
+                    </p>
+                  )}
 
                   <div className="flex gap-3">
                     <button

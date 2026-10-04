@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { canApproveCharacters } from "@/lib/permissions";
+import {
+  isWowCharacterClass,
+  isWowSpecialization,
+} from "@/lib/wow-classes";
 
 export const runtime = "nodejs";
 
@@ -167,10 +171,21 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       );
     }
 
-    characters.push({
+    const approvedCharacter: Record<string, string> = {
       name: requestData.name,
       server: requestData.server,
-    });
+    };
+    if (
+      isWowCharacterClass(requestData.characterClass) &&
+      isWowSpecialization(requestData.characterClass, requestData.mainSpec)
+    ) {
+      approvedCharacter.characterClass = requestData.characterClass;
+      approvedCharacter.mainSpec = requestData.mainSpec;
+      if (isWowSpecialization(requestData.characterClass, requestData.offSpec)) {
+        approvedCharacter.offSpec = requestData.offSpec;
+      }
+    }
+    characters.push(approvedCharacter);
 
     const duplicatePendingUpdates = requestsSnapshot.docs
       .filter((requestDoc) => {

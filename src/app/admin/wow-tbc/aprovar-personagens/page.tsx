@@ -16,6 +16,9 @@ interface CharacterRequest {
   username: string;
   name: string;
   server: string;
+  characterClass?: string;
+  mainSpec?: string;
+  offSpec?: string | null;
   status: string;
 }
 
@@ -193,6 +196,12 @@ export default function AprovarPersonagens() {
 
               <p className="mb-4">
                 <b>Personagem:</b> {req.name}
+              </p>
+
+              <p className="mb-4 text-sm text-gray-300">
+                <b>Classe:</b> {req.characterClass || "Nao informada"}
+                {req.mainSpec ? ` · Main: ${req.mainSpec}` : ""}
+                {req.offSpec ? ` · Off: ${req.offSpec}` : ""}
               </p>
 
               <div className="flex gap-4 flex-wrap">
