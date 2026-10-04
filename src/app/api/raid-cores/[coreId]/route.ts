@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { isWowSpecialization } from "@/lib/wow-classes";
 import {
   isRaidCharacterClass,
   isRaidCoreId,
@@ -140,6 +141,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
           name?: unknown;
           server?: unknown;
           characterClass?: unknown;
+          mainSpec?: unknown;
+          offSpec?: unknown;
         }>)
       : [];
     const ownedCharacter = characters.find(
@@ -158,9 +161,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     const characterClass = ownedCharacter.characterClass;
-    if (!isRaidCharacterClass(characterClass)) {
+    const mainSpec = ownedCharacter.mainSpec;
+    const offSpec = ownedCharacter.offSpec;
+    if (
+      !isRaidCharacterClass(characterClass) ||
+      !isWowSpecialization(characterClass, mainSpec) ||
+      (offSpec !== null && offSpec !== undefined &&
+        (!isWowSpecialization(characterClass, offSpec) || offSpec === mainSpec))
+    ) {
       return NextResponse.json(
-        { error: "Esse personagem ainda nao tem classe salva no perfil." },
+        { error: "Esse personagem precisa ter classe e main spec no perfil." },
         { status: 400 }
       );
     }
@@ -183,6 +193,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
           username: userData?.username || decodedToken.name || "Membro",
           characterName,
           characterClass,
+          mainSpec,
+          offSpec: typeof offSpec === "string" ? offSpec : null,
           server,
           status: "pending",
           slot: null,
@@ -199,6 +211,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
         username: userData?.username || decodedToken.name || "Membro",
         characterName,
         characterClass,
+        mainSpec,
+        offSpec: typeof offSpec === "string" ? offSpec : null,
         server,
         status: "pending",
         slot: null,

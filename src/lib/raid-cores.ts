@@ -20,6 +20,8 @@ export interface RaidCoreSignup {
   username: string;
   characterName: string;
   characterClass?: RaidCharacterClass;
+  mainSpec?: string;
+  offSpec?: string | null;
   server: string;
   status: "pending" | "selected";
   slot: number | null;

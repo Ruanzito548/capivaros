@@ -13,6 +13,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { canAccessWowAdmin } from "@/lib/permissions";
+import { getWowheadSpecIconUrl } from "@/lib/wow-classes";
 import {
   RAID_CORE_IDS,
   RAID_CORE_SIZES,
@@ -307,9 +308,7 @@ export default function ManageRaidCoresPage() {
                       <p className="font-semibold text-white">
                         {signup.characterName}
                       </p>
-                      <p className="mt-1 text-sm text-red-300">
-                        {signup.characterClass || "Classe pendente"}
-                      </p>
+                      <SpecializationIcons signup={signup} />
                     </div>
                   </DraggableSignup>
                 );
@@ -409,10 +408,8 @@ function DroppableRaidSlot({
           <span className="flex min-h-8 items-center justify-between gap-2 pr-6">
             <span className="min-w-0 truncate">
               {signup.characterName}
-              <span className="ml-2 text-red-300">
-                {signup.characterClass || "Classe pendente"}
-              </span>
             </span>
+            <SpecializationIcons signup={signup} />
             <button
               type="button"
               title="Desalocar e devolver a inscricao para a fila"
@@ -428,5 +425,41 @@ function DroppableRaidSlot({
         <span className="text-gray-600">Vaga {slot}</span>
       )}
     </li>
+  );
+}
+
+function SpecializationIcons({ signup }: { signup: RaidCoreSignup }) {
+  const mainIcon = getWowheadSpecIconUrl(signup.characterClass, signup.mainSpec);
+  const offIcon = getWowheadSpecIconUrl(signup.characterClass, signup.offSpec);
+
+  if (!mainIcon && !offIcon) {
+    return <span className="text-xs text-gray-500">Specs nao cadastradas</span>;
+  }
+
+  return (
+    <span className="flex shrink-0 items-center gap-1">
+      {mainIcon && (
+        <img
+          src={mainIcon}
+          alt={`Main spec: ${signup.mainSpec}`}
+          title={`Main spec: ${signup.mainSpec}`}
+          width={24}
+          height={24}
+          loading="lazy"
+          className="h-6 w-6 rounded-sm"
+        />
+      )}
+      {offIcon && (
+        <img
+          src={offIcon}
+          alt={`Off spec: ${signup.offSpec}`}
+          title={`Off spec: ${signup.offSpec}`}
+          width={20}
+          height={20}
+          loading="lazy"
+          className="h-5 w-5 rounded-sm opacity-75"
+        />
+      )}
+    </span>
   );
 }

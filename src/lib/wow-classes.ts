@@ -10,6 +10,54 @@ const WOW_CLASS_DATA = [
   { name: "Guerreiro", logsClassId: 1, specializations: ["Arms", "Fury", "Protection"] },
 ] as const;
 
+const WOW_SPEC_ICONS = {
+  Druida: {
+    Balance: "spell_nature_starfall",
+    Feral: "ability_druid_catform",
+    Restoration: "spell_nature_healingtouch",
+  },
+  Caçador: {
+    "Beast Mastery": "ability_hunter_bestialdiscipline",
+    Marksmanship: "ability_marksmanship",
+    Survival: "ability_hunter_swiftstrike",
+  },
+  Mago: {
+    Arcane: "spell_holy_magicalsentry",
+    Fire: "spell_fire_flamebolt",
+    Frost: "spell_frost_frostbolt02",
+  },
+  Paladino: {
+    Holy: "spell_holy_holybolt",
+    Protection: "spell_holy_devotionaura",
+    Retribution: "spell_holy_auraoflight",
+  },
+  Sacerdote: {
+    Discipline: "spell_holy_wordfortitude",
+    Holy: "spell_holy_holybolt",
+    Shadow: "spell_shadow_shadowwordpain",
+  },
+  Ladino: {
+    Assassination: "ability_rogue_eviscerate",
+    Combat: "ability_backstab",
+    Subtlety: "ability_stealth",
+  },
+  Xamã: {
+    Elemental: "spell_nature_lightning",
+    Enhancement: "spell_nature_lightningshield",
+    Restoration: "spell_nature_magicimmunity",
+  },
+  Bruxo: {
+    Affliction: "spell_shadow_deathcoil",
+    Demonology: "spell_shadow_metamorphosis",
+    Destruction: "spell_shadow_rainoffire",
+  },
+  Guerreiro: {
+    Arms: "ability_warrior_savageblow",
+    Fury: "ability_warrior_innerrage",
+    Protection: "ability_warrior_defensivestance",
+  },
+} as const satisfies Record<WowCharacterClass, Record<string, string>>;
+
 export type WowCharacterClass = (typeof WOW_CLASS_DATA)[number]["name"];
 
 export const WOW_CHARACTER_CLASSES: readonly WowCharacterClass[] =
@@ -36,4 +84,21 @@ export function isWowSpecialization(
 ): specialization is string {
   return typeof specialization === "string" &&
     getWowSpecializations(characterClass).includes(specialization);
+}
+
+export function getWowheadSpecIconUrl(
+  characterClass: unknown,
+  specialization: unknown
+) {
+  if (!isWowCharacterClass(characterClass) || typeof specialization !== "string") {
+    return null;
+  }
+
+  const icon = WOW_SPEC_ICONS[characterClass][
+    specialization as keyof (typeof WOW_SPEC_ICONS)[typeof characterClass]
+  ];
+
+  return icon
+    ? `https://wow.zamimg.com/images/wow/icons/large/${icon}.jpg`
+    : null;
 }
