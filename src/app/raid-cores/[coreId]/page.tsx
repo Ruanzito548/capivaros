@@ -240,7 +240,10 @@ export default function RaidCorePage() {
           {RAID_CORE_SIZES.map((size) => {
             const sizeRoster = payload.roster.filter((member) => member.size === size);
             const sizeSignups = payload.mySignups.filter(
-              (signup) => signup.coreId === coreId && signup.size === size
+              (signup) =>
+                signup.coreId === coreId &&
+                signup.size === size &&
+                signup.status === "pending"
             );
             const occupiedSlots = new Set(
               sizeRoster.map((member) => member.slot).filter((slot): slot is number => slot !== null)
