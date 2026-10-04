@@ -56,7 +56,7 @@ export default function Navbar() {
         </Link>
 
         {/* MENU DESKTOP */}
-        <div className="hidden xl:flex items-center justify-center gap-8 text-xl font-semibold tracking-wide lg:text-3xl">
+        <div className="hidden xl:flex items-center justify-center gap-8 text-lg font-semibold tracking-wide">
 
           <Link href="/" className="hover:text-red-500 transition">
             Home
@@ -95,7 +95,7 @@ export default function Navbar() {
 
         </div>
 
-        <div className="hidden xl:flex items-center justify-end gap-4">
+        <div className="hidden xl:flex items-center justify-end gap-4 text-lg font-semibold">
           {user ? (
             <>
               <Link
@@ -115,7 +115,7 @@ export default function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="bg-red-700 px-6 py-2 text-xl rounded hover:bg-red-800 transition"
+              className="bg-red-700 px-4 py-1 rounded hover:bg-red-800 transition"
             >
               Login
             </Link>
@@ -133,7 +133,7 @@ export default function Navbar() {
 
       {/* MENU MOBILE */}
       {menuOpen && (
-        <div className="xl:hidden bg-[#0b0b0b] border-t border-red-800 flex flex-col items-center gap-4 py-6 text-2xl font-semibold">
+        <div className="xl:hidden bg-[#0b0b0b] border-t border-red-800 flex flex-col items-center gap-4 py-6 text-lg font-semibold">
 
           <Link href="/" onClick={() => setMenuOpen(false)}>
             Home
@@ -190,7 +190,7 @@ export default function Navbar() {
             <Link
               href="/login"
               onClick={() => setMenuOpen(false)}
-              className="bg-red-700 px-6 py-2 text-2xl rounded"
+              className="bg-red-700 px-4 py-1 rounded"
             >
               Login
             </Link>
