@@ -21,7 +21,7 @@ import {
   type RaidCoreSignup,
 } from "@/lib/raid-cores";
 
-type SignupAction = "place" | "unplace" | "remove";
+type SignupAction = "place" | "unplace";
 
 interface SignupDragData {
   signupId: string;
@@ -41,7 +41,6 @@ export default function ManageRaidCoresPage() {
   const [signups, setSignups] = useState<RaidCoreSignup[]>([]);
   const [selectedCore, setSelectedCore] = useState<RaidCoreId>("1");
   const [selectedSize, setSelectedSize] = useState<RaidCoreSize>(40);
-  const [slotSelections, setSlotSelections] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -109,10 +108,6 @@ export default function ManageRaidCoresPage() {
     slot?: number,
     swapSignupId?: string
   ) => {
-    if (action === "remove" && !window.confirm(`Remover a inscricao de ${signup.characterName}?`)) {
-      return;
-    }
-
     const currentUser = auth.currentUser;
     if (!currentUser) {
       router.replace("/login");
@@ -144,9 +139,7 @@ export default function ManageRaidCoresPage() {
           ? swapSignupId
             ? "Posicoes trocadas na composicao."
             : `${signup.characterName} adicionado a composicao.`
-          : action === "unplace"
-            ? `${signup.characterName} voltou para a fila.`
-            : `Inscricao de ${signup.characterName} removida.`
+          : `${signup.characterName} voltou para a fila.`
       );
     } catch (updateError) {
       setError(
@@ -308,64 +301,15 @@ export default function ManageRaidCoresPage() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {pending.map((signup) => {
-                const availableSlots = Array.from(
-                  { length: selectedSize },
-                  (_, index) => index + 1
-                ).filter((slot) => !placed.some((entry) => entry.slot === slot));
-                const selectedSlot =
-                  slotSelections[signup.id] ?? availableSlots[0] ?? "";
-
                 return (
                   <DraggableSignup key={signup.id} signup={signup}>
-                    <div className="border border-white/10 bg-[#141414] p-4 pr-9">
-                      <p className="mb-1 font-semibold text-white">
+                    <div className="border border-white/10 bg-[#141414] p-4 pr-10">
+                      <p className="font-semibold text-white">
                         {signup.characterName}
                       </p>
-                      <p className="mb-3 text-xs text-gray-500">
-                        {signup.username} · {signup.server}
+                      <p className="mt-1 text-sm text-red-300">
+                        {signup.characterClass || "Classe pendente"}
                       </p>
-                      <div className="flex flex-wrap gap-2">
-                        <select
-                          aria-label={`Slot para ${signup.characterName}`}
-                          value={selectedSlot}
-                          onChange={(event) =>
-                            setSlotSelections((current) => ({
-                              ...current,
-                              [signup.id]: Number(event.target.value),
-                            }))
-                          }
-                          disabled={availableSlots.length === 0 || savingId !== null}
-                          className="min-w-0 flex-1 rounded border border-red-950 bg-[#0b0b0b] px-2 py-2 text-xs text-white"
-                        >
-                          {availableSlots.length === 0 ? (
-                            <option value="">Composicao cheia</option>
-                          ) : (
-                            availableSlots.map((slot) => (
-                              <option key={slot} value={slot}>
-                                Grupo {Math.ceil(slot / 5)} · Vaga {slot}
-                              </option>
-                            ))
-                          )}
-                        </select>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void updateSignup(signup, "place", Number(selectedSlot))
-                          }
-                          disabled={availableSlots.length === 0 || savingId !== null}
-                          className="rounded bg-red-800 px-3 py-2 text-xs font-semibold hover:bg-red-700 disabled:opacity-50"
-                        >
-                          {savingId === signup.id ? "Salvando..." : "Alocar"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void updateSignup(signup, "remove")}
-                          disabled={savingId !== null}
-                          className="rounded border border-red-900 px-3 py-2 text-xs text-red-300 hover:bg-red-950 disabled:opacity-50"
-                        >
-                          Remover
-                        </button>
-                      </div>
                     </div>
                   </DraggableSignup>
                 );
@@ -465,7 +409,9 @@ function DroppableRaidSlot({
           <span className="flex min-h-8 items-center justify-between gap-2 pr-6">
             <span className="min-w-0 truncate">
               {signup.characterName}
-              <span className="ml-1 text-gray-500">{signup.username}</span>
+              <span className="ml-2 text-red-300">
+                {signup.characterClass || "Classe pendente"}
+              </span>
             </span>
             <button
               type="button"

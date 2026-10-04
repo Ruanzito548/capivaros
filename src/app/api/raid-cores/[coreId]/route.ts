@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import {
+  isRaidCharacterClass,
   isRaidCoreId,
   isRaidCoreSize,
   type RaidCoreSignup,
@@ -116,13 +117,19 @@ export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const body = (await request.json()) as Record<string, unknown>;
     const size = body.size;
+    const characterClass = body.characterClass;
     const characterName =
       typeof body.characterName === "string" ? body.characterName.trim() : "";
     const server = typeof body.server === "string" ? body.server.trim() : "";
 
-    if (!isRaidCoreSize(size) || !characterName || !server) {
+    if (
+      !isRaidCoreSize(size) ||
+      !isRaidCharacterClass(characterClass) ||
+      !characterName ||
+      !server
+    ) {
       return NextResponse.json(
-        { error: "Escolha um core, tamanho e personagem validos." },
+        { error: "Escolha core, tamanho, personagem e classe validos." },
         { status: 400 }
       );
     }
@@ -165,6 +172,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           userId: decodedToken.uid,
           username: userData?.username || decodedToken.name || "Membro",
           characterName,
+          characterClass,
           server,
           status: "pending",
           slot: null,
@@ -180,6 +188,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         userId: decodedToken.uid,
         username: userData?.username || decodedToken.name || "Membro",
         characterName,
+        characterClass,
         server,
         status: "pending",
         slot: null,

@@ -7,6 +7,8 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import {
+  isRaidCharacterClass,
+  RAID_CHARACTER_CLASSES,
   isRaidCoreId,
   RAID_CORE_SIZES,
   type RaidCoreSignup,
@@ -36,6 +38,7 @@ export default function RaidCorePage() {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [payload, setPayload] = useState<CorePayload>({ roster: [], mySignups: [] });
   const [selectedCharacters, setSelectedCharacters] = useState<Record<number, string>>({});
+  const [selectedClasses, setSelectedClasses] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [submittingSize, setSubmittingSize] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -120,6 +123,10 @@ export default function RaidCorePage() {
       setError("Selecione um personagem aprovado da sua conta.");
       return;
     }
+    if (!isRaidCharacterClass(selectedClasses[size])) {
+      setError("Selecione a classe do personagem.");
+      return;
+    }
 
     setSubmittingSize(size);
     setError(null);
@@ -135,6 +142,7 @@ export default function RaidCorePage() {
         body: JSON.stringify({
           size,
           characterName: character.name,
+          characterClass: selectedClasses[size],
           server: character.server,
         }),
       });
@@ -152,6 +160,7 @@ export default function RaidCorePage() {
         mySignups: Array.isArray(refreshed.mySignups) ? refreshed.mySignups : [],
       });
       setSelectedCharacters((current) => ({ ...current, [size]: "" }));
+      setSelectedClasses((current) => ({ ...current, [size]: "" }));
     } catch (signupError) {
       setError(
         signupError instanceof Error
@@ -221,7 +230,7 @@ export default function RaidCorePage() {
                   key={signup.id}
                   className="rounded border border-red-900 bg-[#111] px-4 py-2 text-sm"
                 >
-                  {signup.characterName} · Core {signup.coreId} · {signup.size}
+                  {signup.characterName} · {signup.characterClass || "Classe pendente"} · Core {signup.coreId} · {signup.size}
                   {" pessoas · "}
                   {signup.status === "selected" ? `Grupo ${Math.ceil((signup.slot ?? 1) / 5)}` : "Aguardando"}
                 </li>
@@ -254,7 +263,7 @@ export default function RaidCorePage() {
                   </div>
 
                   {user && (
-                    <div className="flex flex-col gap-2 sm:min-w-80 sm:flex-row">
+                    <div className="flex flex-col gap-2 sm:min-w-[32rem] sm:flex-row">
                       <select
                         aria-label={`Personagem para Core ${size}`}
                         value={selectedCharacters[size] ?? ""}
@@ -279,7 +288,7 @@ export default function RaidCorePage() {
                               value={identity}
                               disabled={Boolean(existingSignup)}
                             >
-                              {character.name} ({character.server})
+                              {character.name}
                               {existingSignup
                                 ? ` · Core ${existingSignup.coreId}, ${existingSignup.size} pessoas`
                                 : ""}
@@ -287,10 +296,33 @@ export default function RaidCorePage() {
                           );
                         })}
                       </select>
+                      <select
+                        aria-label={`Classe para Core ${size}`}
+                        value={selectedClasses[size] ?? ""}
+                        onChange={(event) =>
+                          setSelectedClasses((current) => ({
+                            ...current,
+                            [size]: event.target.value,
+                          }))
+                        }
+                        className="min-w-0 flex-1 rounded-md border border-red-900 bg-[#111] px-3 py-2 text-white"
+                        disabled={submittingSize !== null}
+                      >
+                        <option value="">Selecione a classe</option>
+                        {RAID_CHARACTER_CLASSES.map((characterClass) => (
+                          <option key={characterClass} value={characterClass}>
+                            {characterClass}
+                          </option>
+                        ))}
+                      </select>
                       <button
                         type="button"
                         onClick={() => void handleSignup(size)}
-                        disabled={!selectedCharacters[size] || submittingSize !== null}
+                        disabled={
+                          !selectedCharacters[size] ||
+                          !selectedClasses[size] ||
+                          submittingSize !== null
+                        }
                         className="rounded-md bg-red-700 px-4 py-2 font-semibold transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {submittingSize === size ? "Enviando..." : "Inscrever-se"}
@@ -325,8 +357,8 @@ export default function RaidCorePage() {
                                   <span className="font-semibold text-white">
                                     {member.characterName}
                                   </span>
-                                  <span className="ml-2 text-xs text-gray-500">
-                                    {member.username}
+                                  <span className="ml-2 text-xs text-red-300">
+                                    {member.characterClass || "Classe pendente"}
                                   </span>
                                 </span>
                               ) : (
