@@ -264,14 +264,14 @@ export default function NoticiasAdmin() {
             placeholder="Titulo"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="bg-[#1c1c1c] border border-red-800 p-3 rounded"
+            className="news-copy bg-[#1c1c1c] border border-red-800 p-3 rounded"
           />
 
           <textarea
             placeholder="Conteudo"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="bg-[#1c1c1c] border border-red-800 p-3 rounded h-40"
+            className="news-copy bg-[#1c1c1c] border border-red-800 p-3 rounded h-40"
           />
 
           <input
@@ -309,9 +309,9 @@ export default function NoticiasAdmin() {
                 key={item.id}
                 className="bg-[#111] border border-red-800 p-6 rounded-xl"
               >
-                <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                <h3 className="news-copy text-xl mb-2">{item.title}</h3>
 
-                <p className="text-gray-400 mb-4">
+                <p className="news-copy text-gray-400 mb-4">
                   {item.content.slice(0, 150)}...
                 </p>
 

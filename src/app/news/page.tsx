@@ -105,11 +105,11 @@ export default function NewsList() {
 
               <div className="p-8 bg-[#111]">
 
-                <h2 className="text-3xl font-bold mb-4">
+                <h2 className="news-copy text-3xl mb-4">
                   {destaque.title}
                 </h2>
 
-                <p className="text-gray-400 text-lg">
+                <p className="news-copy text-gray-400 text-lg">
                   {destaque.content.slice(0, 240)}...
                 </p>
 
@@ -158,11 +158,11 @@ export default function NewsList() {
 
                   <div className="p-6">
 
-                    <h3 className="text-xl font-semibold mb-2">
+                    <h3 className="news-copy text-xl mb-2">
                       {n.title}
                     </h3>
 
-                    <p className="text-gray-400 text-sm">
+                    <p className="news-copy text-gray-400 text-sm">
                       {n.content.slice(0, 120)}...
                     </p>
 

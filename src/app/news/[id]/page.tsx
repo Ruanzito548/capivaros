@@ -211,7 +211,7 @@ export default function NewsPage() {
   return (
     <div className="min-h-screen bg-transparent text-white px-6 py-16 flex justify-center">
       <div className="max-w-4xl w-full">
-        <h1 className="text-5xl font-bold text-red-500 mb-4">
+        <h1 className="news-copy text-5xl text-red-500 mb-4">
           {news.title}
         </h1>
 
@@ -268,7 +268,7 @@ export default function NewsPage() {
           </div>
         )}
 
-        <div className="text-gray-300 text-lg leading-relaxed whitespace-pre-line mb-16">
+        <div className="news-copy text-gray-300 text-lg leading-relaxed whitespace-pre-line mb-16">
           {news.content}
         </div>
 

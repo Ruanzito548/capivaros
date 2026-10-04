@@ -1,18 +1,12 @@
 import "./globals.css";
-import { Michroma, Rajdhani, VT323 } from "next/font/google";
+import { Abril_Fatface, VT323 } from "next/font/google";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 
-const michroma = Michroma({
+const abrilFatface = Abril_Fatface({
   weight: "400",
   subsets: ["latin"],
-  variable: "--font-michroma",
-});
-
-const rajdhani = Rajdhani({
-  weight: ["300", "400", "500", "600", "700"],
-  subsets: ["latin"],
-  variable: "--font-rajdhani",
+  variable: "--font-abril-fatface",
 });
 
 const vt323 = VT323({
@@ -39,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="pt-br">
       <body
-        className={`${michroma.variable} ${rajdhani.variable} ${vt323.variable} text-white`}
+        className={`${abrilFatface.variable} ${vt323.variable} text-white`}
       >
         <Navbar />
         <main className="pt-28">{children}</main>
