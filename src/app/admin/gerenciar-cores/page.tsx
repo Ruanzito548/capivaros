@@ -13,7 +13,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { canAccessWowAdmin } from "@/lib/permissions";
-import { getWowheadSpecIconUrl } from "@/lib/wow-classes";
+import WowSpecIcons from "@/components/wow-spec-icons";
 import {
   RAID_CORE_IDS,
   RAID_CORE_SIZES,
@@ -429,37 +429,11 @@ function DroppableRaidSlot({
 }
 
 function SpecializationIcons({ signup }: { signup: RaidCoreSignup }) {
-  const mainIcon = getWowheadSpecIconUrl(signup.characterClass, signup.mainSpec);
-  const offIcon = getWowheadSpecIconUrl(signup.characterClass, signup.offSpec);
-
-  if (!mainIcon && !offIcon) {
-    return <span className="text-xs text-gray-500">Specs nao cadastradas</span>;
-  }
-
   return (
-    <span className="flex shrink-0 items-center gap-1">
-      {mainIcon && (
-        <img
-          src={mainIcon}
-          alt={`Main spec: ${signup.mainSpec}`}
-          title={`Main spec: ${signup.mainSpec}`}
-          width={24}
-          height={24}
-          loading="lazy"
-          className="h-6 w-6 rounded-sm"
-        />
-      )}
-      {offIcon && (
-        <img
-          src={offIcon}
-          alt={`Off spec: ${signup.offSpec}`}
-          title={`Off spec: ${signup.offSpec}`}
-          width={20}
-          height={20}
-          loading="lazy"
-          className="h-5 w-5 rounded-sm opacity-75"
-        />
-      )}
-    </span>
+    <WowSpecIcons
+      characterClass={signup.characterClass}
+      mainSpec={signup.mainSpec}
+      offSpec={signup.offSpec}
+    />
   );
 }

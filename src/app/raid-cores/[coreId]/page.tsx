@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import WowSpecIcons from "@/components/wow-spec-icons";
 import { auth, db } from "@/lib/firebase";
 import {
   isRaidCoreId,
@@ -329,13 +330,15 @@ export default function RaidCorePage() {
                               className="flex min-h-11 items-center border border-white/10 bg-[#111] px-3 text-sm"
                             >
                               {member ? (
-                                <span className="min-w-0">
+                                <span className="flex min-w-0 w-full items-center justify-between gap-2">
                                   <span className="font-semibold text-white">
                                     {member.characterName}
                                   </span>
-                                  <span className="ml-2 text-xs text-red-300">
-                                    {member.characterClass || "Classe pendente"}
-                                  </span>
+                                  <WowSpecIcons
+                                    characterClass={member.characterClass}
+                                    mainSpec={member.mainSpec}
+                                    offSpec={member.offSpec}
+                                  />
                                 </span>
                               ) : (
                                 <span className="text-gray-600">Vaga {slot}</span>
