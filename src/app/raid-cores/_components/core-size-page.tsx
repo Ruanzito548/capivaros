@@ -22,7 +22,7 @@ export default function CoreSizePage({ size }: { size: RaidCoreSize }) {
 
     fetchJson<{ cores: RaidCore[] }>("/api/raid-cores")
       .then(async ({ cores: allCores }) => {
-        const sizeCores = allCores.filter((core) => core.size === null || core.size === size);
+        const sizeCores = allCores.filter((core) => core.size === size);
         const entries = await Promise.all(
           sizeCores.map(async (core) => {
             const data = await fetchJson<{ roster?: RaidCoreSignup[] }>(`/api/raid-cores/${core.id}`);
@@ -71,6 +71,8 @@ export default function CoreSizePage({ size }: { size: RaidCoreSize }) {
 
         {loading ? (
           <p className="text-center text-red-400">Carregando inscritos...</p>
+        ) : cores.length === 0 ? (
+          <p className="text-center text-gray-400">Nenhum core criado para {size} pessoas.</p>
         ) : (
           <div className="space-y-10">
             {cores.map((core) => {

@@ -4,7 +4,6 @@ import {
   type WowCharacterClass,
 } from "@/lib/wow-classes";
 
-export const LEGACY_RAID_CORE_ID = "1";
 export const RAID_CORE_SIZES = [40, 20, 10] as const;
 export const RAID_CHARACTER_CLASSES = WOW_CHARACTER_CLASSES;
 
@@ -36,8 +35,7 @@ export function isRaidCoreId(value: unknown): value is RaidCoreId {
 export interface RaidCore {
   id: RaidCoreId;
   name: string;
-  // O Core 1 antigo aceita qualquer tamanho.
-  size: RaidCoreSize | null;
+  size: RaidCoreSize;
 }
 
 export function isRaidCoreSize(value: unknown): value is RaidCoreSize {

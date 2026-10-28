@@ -137,7 +137,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     if (
       !isRaidCoreSize(size) ||
-      (core.size !== null && core.size !== size) ||
+      (core.size !== size) ||
       !characterName ||
       !server
     ) {

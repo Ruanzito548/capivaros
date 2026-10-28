@@ -51,7 +51,7 @@ export default function RaidCorePage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Cores criados no admin tem tamanho fixo; o Core 1 antigo usa o parametro da URL.
+  // Antes de carregar o core, usa o tamanho da URL.
   const lockedSize = payload.core?.size ?? sizeParam;
   const visibleSizes = RAID_CORE_SIZES.filter((size) => size === lockedSize);
   const sizesToShow = visibleSizes.length > 0 ? visibleSizes : RAID_CORE_SIZES;

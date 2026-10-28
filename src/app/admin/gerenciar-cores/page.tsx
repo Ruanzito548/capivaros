@@ -46,7 +46,7 @@ export default function ManageRaidCoresPage() {
   const [newCoreName, setNewCoreName] = useState("");
   const [newCoreSize, setNewCoreSize] = useState<RaidCoreSize>(40);
   const [creatingCore, setCreatingCore] = useState(false);
-  const [selectedCore, setSelectedCore] = useState<RaidCoreId>("1");
+  const [selectedCore, setSelectedCore] = useState<RaidCoreId>("");
   const [selectedSize, setSelectedSize] = useState<RaidCoreSize>(40);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -220,12 +220,10 @@ export default function ManageRaidCoresPage() {
     );
   }
 
-  const availableCores = cores.filter(
-    (core) => core.size === null || core.size === selectedSize
-  );
+  const availableCores = cores.filter((core) => core.size === selectedSize);
   const activeCore =
     availableCores.find((core) => core.id === selectedCore) ?? availableCores[0];
-  const activeCoreId = activeCore?.id ?? selectedCore;
+  const activeCoreId = activeCore?.id ?? "";
   const selectedSignups = signups.filter(
     (signup) => signup.coreId === activeCoreId && signup.size === selectedSize
   );
@@ -329,7 +327,7 @@ export default function ManageRaidCoresPage() {
         <section className="mb-10">
           <div className="mb-5 flex items-baseline justify-between gap-3">
             <h2 className="text-2xl font-semibold text-red-400">
-              {activeCore?.name ?? `Core ${activeCoreId}`} · Raid {selectedSize}
+              {activeCore?.name ?? "Nenhum core criado"} · Raid {selectedSize}
             </h2>
             <span className="text-sm text-gray-400">
               {placed.length}/{selectedSize} alocados
