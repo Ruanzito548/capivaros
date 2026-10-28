@@ -11,8 +11,10 @@ import { getWowClassColor } from "@/lib/wow-classes";
 import {
   isRaidCoreId,
   RAID_CORE_SIZES,
+  type RaidCore,
   type RaidCoreSignup,
 } from "@/lib/raid-cores";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface Character {
   name: string;
@@ -23,6 +25,7 @@ interface Character {
 }
 
 interface CorePayload {
+  core?: RaidCore | null;
   roster: RaidCoreSignup[];
   mySignups: RaidCoreSignup[];
 }
@@ -38,8 +41,6 @@ export default function RaidCorePage() {
   const { coreId: coreParam } = useParams<{ coreId: string }>();
   const coreId = isRaidCoreId(coreParam) ? coreParam : null;
   const sizeParam = Number(useSearchParams().get("tamanho"));
-  const visibleSizes = RAID_CORE_SIZES.filter((size) => size === sizeParam);
-  const sizesToShow = visibleSizes.length > 0 ? visibleSizes : RAID_CORE_SIZES;
   const [user, setUser] = useState<User | null>(null);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [payload, setPayload] = useState<CorePayload>({ roster: [], mySignups: [] });
@@ -49,6 +50,11 @@ export default function RaidCorePage() {
   const [submittingSize, setSubmittingSize] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  // Cores criados no admin tem tamanho fixo; o Core 1 antigo usa o parametro da URL.
+  const lockedSize = payload.core?.size ?? sizeParam;
+  const visibleSizes = RAID_CORE_SIZES.filter((size) => size === lockedSize);
+  const sizesToShow = visibleSizes.length > 0 ? visibleSizes : RAID_CORE_SIZES;
 
   useEffect(() => {
     if (!coreId) {
@@ -81,16 +87,13 @@ export default function RaidCorePage() {
           setCharacters([]);
         }
 
-        const response = await fetch(`/api/raid-cores/${coreId}`, {
+        const data = await fetchJson<CorePayload>(`/api/raid-cores/${coreId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
-        const data = (await response.json()) as CorePayload & { error?: string };
-        if (!response.ok) {
-          throw new Error(data.error || "Nao foi possivel carregar a composicao.");
-        }
 
         if (!cancelled) {
           setPayload({
+            core: data.core ?? null,
             roster: Array.isArray(data.roster) ? data.roster : [],
             mySignups: Array.isArray(data.mySignups) ? data.mySignups : [],
           });
@@ -139,7 +142,7 @@ export default function RaidCorePage() {
 
     try {
       const token = await user.getIdToken();
-      const response = await fetch(`/api/raid-cores/${coreId}`, {
+      await fetchJson(`/api/raid-cores/${coreId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -151,16 +154,12 @@ export default function RaidCorePage() {
           server: character.server,
         }),
       });
-      const result = (await response.json()) as { error?: string };
-      if (!response.ok) {
-        throw new Error(result.error || "Nao foi possivel fazer a inscricao.");
-      }
 
-      const refreshResponse = await fetch(`/api/raid-cores/${coreId}`, {
+      const refreshed = await fetchJson<CorePayload>(`/api/raid-cores/${coreId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const refreshed = (await refreshResponse.json()) as CorePayload;
       setPayload({
+        core: refreshed.core ?? null,
         roster: Array.isArray(refreshed.roster) ? refreshed.roster : [],
         mySignups: Array.isArray(refreshed.mySignups) ? refreshed.mySignups : [],
       });
@@ -194,6 +193,8 @@ export default function RaidCorePage() {
     ])
   );
 
+  const mySignupsHere = payload.mySignups.filter((signup) => signup.coreId === coreId);
+
   return (
     <div className="min-h-screen bg-transparent px-6 py-16 text-white">
       <div className="mx-auto max-w-7xl">
@@ -205,7 +206,7 @@ export default function RaidCorePage() {
         </Link>
 
         <h1 className="mb-10 text-center text-4xl font-bold text-red-500">
-          Core {coreId}
+          {payload.core?.name ?? `Core ${coreId}`}
         </h1>
 
         {error && (
@@ -226,13 +227,13 @@ export default function RaidCorePage() {
           </div>
         )}
 
-        {user && payload.mySignups.length > 0 && (
+        {user && mySignupsHere.length > 0 && (
           <section className="mb-10 border-b border-red-900 pb-6">
             <h2 className="mb-4 text-xl font-semibold text-red-300">
               Inscricoes da sua conta
             </h2>
             <ul className="flex flex-wrap gap-3">
-              {payload.mySignups.map((signup) => (
+              {mySignupsHere.map((signup) => (
                 <li
                   key={signup.id}
                   className="rounded border border-red-900 bg-[#111] px-4 py-2 text-sm"
@@ -240,7 +241,7 @@ export default function RaidCorePage() {
                   <span style={{ color: getWowClassColor(signup.characterClass) }}>
                     {signup.characterName}
                   </span>
-                  {` · ${signup.characterClass || "Classe pendente"} · Core ${signup.coreId} · ${signup.size}`}
+                  {` · ${signup.characterClass || "Classe pendente"} · ${signup.size}`}
                   {" pessoas · "}
                   {signup.status === "selected" ? `Grupo ${Math.ceil((signup.slot ?? 1) / 5)}` : "Aguardando"}
                 </li>

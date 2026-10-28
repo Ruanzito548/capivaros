@@ -4,31 +4,36 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import WowSpecIcons from "@/components/wow-spec-icons";
 import { getWowClassColor } from "@/lib/wow-classes";
+import { fetchJson } from "@/lib/fetch-json";
 import {
-  RAID_CORE_IDS,
-  type RaidCoreId,
+  type RaidCore,
   type RaidCoreSignup,
   type RaidCoreSize,
 } from "@/lib/raid-cores";
 
 export default function CoreSizePage({ size }: { size: RaidCoreSize }) {
-  const [rosters, setRosters] = useState<Partial<Record<RaidCoreId, RaidCoreSignup[]>>>({});
+  const [cores, setCores] = useState<RaidCore[]>([]);
+  const [rosters, setRosters] = useState<Record<string, RaidCoreSignup[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    Promise.all(
-      RAID_CORE_IDS.map(async (coreId) => {
-        const response = await fetch(`/api/raid-cores/${coreId}`);
-        const data = (await response.json()) as { roster?: RaidCoreSignup[]; error?: string };
-        if (!response.ok) throw new Error(data.error || "Nao foi possivel carregar os inscritos.");
-        return [coreId, (data.roster ?? []).filter((member) => member.size === size)] as const;
-      })
-    )
-      .then((entries) => {
-        if (!cancelled) setRosters(Object.fromEntries(entries));
+    fetchJson<{ cores: RaidCore[] }>("/api/raid-cores")
+      .then(async ({ cores: allCores }) => {
+        const sizeCores = allCores.filter((core) => core.size === null || core.size === size);
+        const entries = await Promise.all(
+          sizeCores.map(async (core) => {
+            const data = await fetchJson<{ roster?: RaidCoreSignup[] }>(`/api/raid-cores/${core.id}`);
+            return [core.id, (data.roster ?? []).filter((member) => member.size === size)] as const;
+          })
+        );
+
+        if (!cancelled) {
+          setCores(sizeCores);
+          setRosters(Object.fromEntries(entries));
+        }
       })
       .catch((loadError) => {
         if (!cancelled) {
@@ -68,17 +73,17 @@ export default function CoreSizePage({ size }: { size: RaidCoreSize }) {
           <p className="text-center text-red-400">Carregando inscritos...</p>
         ) : (
           <div className="space-y-10">
-            {RAID_CORE_IDS.map((coreId) => {
-              const roster = rosters[coreId] ?? [];
+            {cores.map((core) => {
+              const roster = rosters[core.id] ?? [];
 
               return (
-                <section key={coreId} className="border-t border-red-900 pt-8">
+                <section key={core.id} className="border-t border-red-900 pt-8">
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <h2 className="text-2xl font-semibold text-red-400">
-                      Core {coreId} · {size} pessoas
+                      {core.name} · {size} pessoas
                     </h2>
                     <Link
-                      href={`/raid-cores/${coreId}?tamanho=${size}`}
+                      href={`/raid-cores/${core.id}?tamanho=${size}`}
                       className="rounded-md bg-red-700 px-4 py-2 font-semibold transition hover:bg-red-600"
                     >
                       Inscrever-se

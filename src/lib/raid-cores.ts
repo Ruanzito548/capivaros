@@ -4,11 +4,11 @@ import {
   type WowCharacterClass,
 } from "@/lib/wow-classes";
 
-export const RAID_CORE_IDS = ["1"] as const;
+export const LEGACY_RAID_CORE_ID = "1";
 export const RAID_CORE_SIZES = [40, 20, 10] as const;
 export const RAID_CHARACTER_CLASSES = WOW_CHARACTER_CLASSES;
 
-export type RaidCoreId = (typeof RAID_CORE_IDS)[number];
+export type RaidCoreId = string;
 export type RaidCoreSize = (typeof RAID_CORE_SIZES)[number];
 export type RaidCharacterClass = WowCharacterClass;
 
@@ -30,7 +30,14 @@ export interface RaidCoreSignup {
 }
 
 export function isRaidCoreId(value: unknown): value is RaidCoreId {
-  return typeof value === "string" && RAID_CORE_IDS.includes(value as RaidCoreId);
+  return typeof value === "string" && value.length > 0;
+}
+
+export interface RaidCore {
+  id: RaidCoreId;
+  name: string;
+  // O Core 1 antigo aceita qualquer tamanho.
+  size: RaidCoreSize | null;
 }
 
 export function isRaidCoreSize(value: unknown): value is RaidCoreSize {

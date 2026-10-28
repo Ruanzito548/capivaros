@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { canAccessWowAdmin } from "@/lib/permissions";
+import { listRaidCores } from "@/lib/raid-cores-server";
 import {
   isRaidCoreId,
   isRaidCoreSize,
@@ -52,6 +53,56 @@ export async function GET(request: NextRequest) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       { error: "Failed to load core signups", message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const decodedToken = await getAuthorizedAdmin(request);
+  if (!decodedToken) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    const body = (await request.json()) as { name?: unknown; size?: unknown };
+    const name = typeof body.name === "string" ? body.name.trim() : "";
+
+    if (!name || name.length > 40 || !isRaidCoreSize(body.size)) {
+      return NextResponse.json(
+        { error: "Informe um nome (ate 40 caracteres) e um tamanho de 10, 20 ou 40." },
+        { status: 400 }
+      );
+    }
+
+    const existing = await listRaidCores();
+    const duplicate = existing.some(
+      (core) =>
+        core.size === body.size &&
+        core.name.localeCompare(name, "pt-BR", { sensitivity: "base" }) === 0
+    );
+    if (duplicate) {
+      return NextResponse.json(
+        { error: "Ja existe um core com esse nome nesse tamanho." },
+        { status: 409 }
+      );
+    }
+
+    const created = await adminDb.collection("raidCores").add({
+      name,
+      size: body.size,
+      createdAt: Date.now(),
+      createdBy: decodedToken.uid,
+    });
+
+    return NextResponse.json(
+      { core: { id: created.id, name, size: body.size } },
+      { status: 201 }
+    );
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { error: "Failed to create core", message },
       { status: 500 }
     );
   }

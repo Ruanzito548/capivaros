@@ -16,12 +16,13 @@ import { canAccessWowAdmin } from "@/lib/permissions";
 import { getWowClassColor } from "@/lib/wow-classes";
 import WowSpecIcons from "@/components/wow-spec-icons";
 import {
-  RAID_CORE_IDS,
   RAID_CORE_SIZES,
+  type RaidCore,
   type RaidCoreId,
   type RaidCoreSize,
   type RaidCoreSignup,
 } from "@/lib/raid-cores";
+import { fetchJson } from "@/lib/fetch-json";
 
 type SignupAction = "place" | "unplace";
 
@@ -41,6 +42,10 @@ interface SlotDropData {
 
 export default function ManageRaidCoresPage() {
   const [signups, setSignups] = useState<RaidCoreSignup[]>([]);
+  const [cores, setCores] = useState<RaidCore[]>([]);
+  const [newCoreName, setNewCoreName] = useState("");
+  const [newCoreSize, setNewCoreSize] = useState<RaidCoreSize>(40);
+  const [creatingCore, setCreatingCore] = useState(false);
   const [selectedCore, setSelectedCore] = useState<RaidCoreId>("1");
   const [selectedSize, setSelectedSize] = useState<RaidCoreSize>(40);
   const [loading, setLoading] = useState(true);
@@ -57,22 +62,15 @@ export default function ManageRaidCoresPage() {
     }
 
     const token = await currentUser.getIdToken();
-    const response = await fetch("/api/admin/raid-cores", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const result = (await response.json()) as
-      | RaidCoreSignup[]
-      | { error?: string };
+    const [signupList, coreList] = await Promise.all([
+      fetchJson<RaidCoreSignup[]>("/api/admin/raid-cores", {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      fetchJson<{ cores: RaidCore[] }>("/api/raid-cores"),
+    ]);
 
-    if (!response.ok || !Array.isArray(result)) {
-      throw new Error(
-        !Array.isArray(result) && result.error
-          ? result.error
-          : "Nao foi possivel carregar as inscricoes."
-      );
-    }
-
-    setSignups(result);
+    setSignups(signupList);
+    setCores(coreList.cores);
   }, [router]);
 
   useEffect(() => {
@@ -122,7 +120,7 @@ export default function ManageRaidCoresPage() {
 
     try {
       const token = await currentUser.getIdToken();
-      const response = await fetch("/api/admin/raid-cores", {
+      await fetchJson("/api/admin/raid-cores", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -130,10 +128,6 @@ export default function ManageRaidCoresPage() {
         },
         body: JSON.stringify({ signupId: signup.id, action, slot, swapSignupId }),
       });
-      const result = (await response.json()) as { error?: string };
-      if (!response.ok) {
-        throw new Error(result.error || "Nao foi possivel atualizar a composicao.");
-      }
 
       await fetchSignups();
       setFeedback(
@@ -180,6 +174,44 @@ export default function ManageRaidCoresPage() {
     );
   };
 
+  const createCore = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      router.replace("/login");
+      return;
+    }
+
+    setCreatingCore(true);
+    setError(null);
+    setFeedback(null);
+
+    try {
+      const token = await currentUser.getIdToken();
+      const result = await fetchJson<{ core: RaidCore }>("/api/admin/raid-cores", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: newCoreName, size: newCoreSize }),
+      });
+
+      await fetchSignups();
+      setSelectedSize(newCoreSize);
+      setSelectedCore(result.core.id);
+      setNewCoreName("");
+      setFeedback(`${result.core.name} criado.`);
+    } catch (createError) {
+      setError(
+        createError instanceof Error
+          ? createError.message
+          : "Nao foi possivel criar o core."
+      );
+    } finally {
+      setCreatingCore(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center text-red-400">
@@ -188,8 +220,14 @@ export default function ManageRaidCoresPage() {
     );
   }
 
+  const availableCores = cores.filter(
+    (core) => core.size === null || core.size === selectedSize
+  );
+  const activeCore =
+    availableCores.find((core) => core.id === selectedCore) ?? availableCores[0];
+  const activeCoreId = activeCore?.id ?? selectedCore;
   const selectedSignups = signups.filter(
-    (signup) => signup.coreId === selectedCore && signup.size === selectedSize
+    (signup) => signup.coreId === activeCoreId && signup.size === selectedSize
   );
   const placed = selectedSignups.filter(
     (signup) => signup.status === "selected" && signup.slot !== null
@@ -222,16 +260,54 @@ export default function ManageRaidCoresPage() {
           </p>
         )}
 
+        <section className="mb-8 border-b border-red-900 pb-6">
+          <h2 className="mb-3 text-lg font-semibold text-red-300">Criar novo core</h2>
+          <form
+            className="grid gap-3 sm:grid-cols-[1fr_auto_auto]"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void createCore();
+            }}
+          >
+            <input
+              value={newCoreName}
+              onChange={(event) => setNewCoreName(event.target.value)}
+              maxLength={40}
+              required
+              placeholder="Nome do core"
+              aria-label="Nome do core"
+              className="rounded-md border border-red-900 bg-[#111] px-4 py-3 text-white"
+            />
+            <select
+              value={newCoreSize}
+              onChange={(event) => setNewCoreSize(Number(event.target.value) as RaidCoreSize)}
+              aria-label="Tamanho do novo core"
+              className="rounded-md border border-red-900 bg-[#111] px-4 py-3 text-white"
+            >
+              {RAID_CORE_SIZES.map((size) => (
+                <option key={size} value={size}>{size} pessoas</option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              disabled={creatingCore || !newCoreName.trim()}
+              className="rounded-md bg-red-700 px-5 py-3 font-semibold transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {creatingCore ? "Criando..." : "Criar core"}
+            </button>
+          </form>
+        </section>
+
         <section className="mb-8 grid gap-4 border-b border-red-900 pb-6 sm:grid-cols-2">
           <label className="flex flex-col gap-2 text-sm text-gray-300">
             Core
             <select
-              value={selectedCore}
+              value={activeCoreId}
               onChange={(event) => setSelectedCore(event.target.value as RaidCoreId)}
               className="rounded-md border border-red-900 bg-[#111] px-4 py-3 text-white"
             >
-              {RAID_CORE_IDS.map((coreId) => (
-                <option key={coreId} value={coreId}>Core {coreId}</option>
+              {availableCores.map((core) => (
+                <option key={core.id} value={core.id}>{core.name}</option>
               ))}
             </select>
           </label>
@@ -253,7 +329,7 @@ export default function ManageRaidCoresPage() {
         <section className="mb-10">
           <div className="mb-5 flex items-baseline justify-between gap-3">
             <h2 className="text-2xl font-semibold text-red-400">
-              Core {selectedCore} · Raid {selectedSize}
+              {activeCore?.name ?? `Core ${activeCoreId}`} · Raid {selectedSize}
             </h2>
             <span className="text-sm text-gray-400">
               {placed.length}/{selectedSize} alocados
@@ -273,7 +349,7 @@ export default function ManageRaidCoresPage() {
                     return (
                       <DroppableRaidSlot
                         key={slot}
-                        coreId={selectedCore}
+                        coreId={activeCoreId}
                         size={selectedSize}
                         slot={slot}
                         signup={signup}

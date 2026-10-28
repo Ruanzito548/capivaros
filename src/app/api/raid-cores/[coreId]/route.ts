@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { isWowSpecialization } from "@/lib/wow-classes";
+import { getRaidCore } from "@/lib/raid-cores-server";
 import {
   isRaidCharacterClass,
   isRaidCoreId,
@@ -72,11 +73,12 @@ async function getRequiredUser(request: NextRequest) {
 export async function GET(request: NextRequest, context: RouteContext) {
   const { coreId } = await context.params;
 
-  if (!isRaidCoreId(coreId)) {
-    return NextResponse.json({ error: "Core not found" }, { status: 404 });
-  }
-
   try {
+    const core = await getRaidCore(coreId);
+    if (!core) {
+      return NextResponse.json({ error: "Core not found" }, { status: 404 });
+    }
+
     const userId = await getOptionalUserId(request);
     const coreSnapshot = await adminDb
       .collection("raidCoreSignups")
@@ -87,10 +89,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       id: document.id,
       ...document.data(),
     })) as RaidCoreSignup[];
-    const validCoreSignups = signups.filter((signup) =>
-      isRaidCoreId(signup.coreId)
-    );
-    const roster = validCoreSignups
+    const roster = signups
       .filter((signup) => signup.status === "selected" && signup.slot !== null)
       .sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0));
 
@@ -100,14 +99,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
         .collection("raidCoreSignups")
         .where("userId", "==", userId)
         .get();
-      const userSignups = userSnapshot.docs.map((document) => ({
+      mySignups = userSnapshot.docs.map((document) => ({
         id: document.id,
         ...document.data(),
       })) as RaidCoreSignup[];
-      mySignups = userSignups.filter((signup) => isRaidCoreId(signup.coreId));
     }
 
-    return NextResponse.json({ coreId, roster, mySignups });
+    return NextResponse.json({ coreId, core, roster, mySignups });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
@@ -124,11 +122,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   const { coreId } = await context.params;
-  if (!isRaidCoreId(coreId)) {
-    return NextResponse.json({ error: "Core not found" }, { status: 404 });
-  }
 
   try {
+    const core = await getRaidCore(coreId);
+    if (!core) {
+      return NextResponse.json({ error: "Core not found" }, { status: 404 });
+    }
+
     const body = (await request.json()) as Record<string, unknown>;
     const size = body.size;
     const characterName =
@@ -137,6 +137,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     if (
       !isRaidCoreSize(size) ||
+      (core.size !== null && core.size !== size) ||
       !characterName ||
       !server
     ) {
