@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import WowSpecIcons from "@/components/wow-spec-icons";
@@ -37,6 +37,9 @@ function characterIdentity(name: string, server: string) {
 export default function RaidCorePage() {
   const { coreId: coreParam } = useParams<{ coreId: string }>();
   const coreId = isRaidCoreId(coreParam) ? coreParam : null;
+  const sizeParam = Number(useSearchParams().get("tamanho"));
+  const visibleSizes = RAID_CORE_SIZES.filter((size) => size === sizeParam);
+  const sizesToShow = visibleSizes.length > 0 ? visibleSizes : RAID_CORE_SIZES;
   const [user, setUser] = useState<User | null>(null);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [payload, setPayload] = useState<CorePayload>({ roster: [], mySignups: [] });
@@ -195,7 +198,7 @@ export default function RaidCorePage() {
     <div className="min-h-screen bg-transparent px-6 py-16 text-white">
       <div className="mx-auto max-w-7xl">
         <Link
-          href="/raid-cores"
+          href={visibleSizes.length > 0 ? `/raid-cores/core-${visibleSizes[0]}` : "/raid-cores"}
           className="mb-8 inline-block text-sm text-gray-400 underline hover:text-red-400"
         >
           Voltar para cores
@@ -247,7 +250,7 @@ export default function RaidCorePage() {
         )}
 
         <div className="space-y-12">
-          {RAID_CORE_SIZES.map((size) => {
+          {sizesToShow.map((size) => {
             const sizeRoster = payload.roster.filter((member) => member.size === size);
             const sizeSignups = payload.mySignups.filter(
               (signup) =>
@@ -421,6 +424,11 @@ export default function RaidCorePage() {
                   </p>
                 )}
 
+                <details open className="group">
+                <summary className="mb-4 flex cursor-pointer select-none list-none items-center gap-2 text-lg font-semibold text-red-300 [&::-webkit-details-marker]:hidden">
+                  <span aria-hidden="true" className="transition-transform group-open:rotate-90">▸</span>
+                  Inscritos ({sizeRoster.length}/{size})
+                </summary>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   {Array.from({ length: groupCount }, (_, groupIndex) => (
                     <div key={groupIndex}>
@@ -464,6 +472,7 @@ export default function RaidCorePage() {
                 {occupiedSlots.size >= size && (
                   <p className="mt-4 text-sm text-emerald-300">Composicao completa</p>
                 )}
+                </details>
               </section>
             );
           })}

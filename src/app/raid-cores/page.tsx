@@ -1,6 +1,5 @@
 import Link from "next/link";
-
-const cores = ["1"];
+import { RAID_CORE_SIZES } from "@/lib/raid-cores";
 
 export default function RaidCoresPage() {
   return (
@@ -11,13 +10,13 @@ export default function RaidCoresPage() {
         </h1>
 
         <div className="mx-auto grid max-w-md gap-5">
-          {cores.map((core) => (
+          {RAID_CORE_SIZES.map((size) => (
             <Link
-              key={core}
-              href={`/raid-cores/${core}`}
+              key={size}
+              href={`/raid-cores/core-${size}`}
               className="rounded-md border border-red-900 bg-[#111] p-6 text-center shadow-[0_0_18px_rgba(255,0,0,0.16)]"
             >
-              <h2 className="text-2xl font-semibold text-red-400">Core {core}</h2>
+              <h2 className="text-2xl font-semibold text-red-400">Cores {size}</h2>
             </Link>
           ))}
         </div>
