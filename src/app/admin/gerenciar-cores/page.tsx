@@ -46,6 +46,7 @@ export default function ManageRaidCoresPage() {
   const [newCoreName, setNewCoreName] = useState("");
   const [newCoreSize, setNewCoreSize] = useState<RaidCoreSize>(40);
   const [creatingCore, setCreatingCore] = useState(false);
+  const [deletingCoreId, setDeletingCoreId] = useState<string | null>(null);
   const [selectedCore, setSelectedCore] = useState<RaidCoreId>("");
   const [selectedSize, setSelectedSize] = useState<RaidCoreSize>(40);
   const [loading, setLoading] = useState(true);
@@ -212,6 +213,49 @@ export default function ManageRaidCoresPage() {
     }
   };
 
+  const deleteCore = async (core: RaidCore) => {
+    if (
+      !window.confirm(
+        `Excluir "${core.name}"? As inscricoes e a composicao desse core tambem serao apagadas.`
+      )
+    ) {
+      return;
+    }
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      router.replace("/login");
+      return;
+    }
+
+    setDeletingCoreId(core.id);
+    setError(null);
+    setFeedback(null);
+
+    try {
+      const token = await currentUser.getIdToken();
+      await fetchJson("/api/admin/raid-cores", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ coreId: core.id }),
+      });
+
+      await fetchSignups();
+      setFeedback(`${core.name} excluido.`);
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Nao foi possivel excluir o core."
+      );
+    } finally {
+      setDeletingCoreId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center text-red-400">
@@ -296,6 +340,77 @@ export default function ManageRaidCoresPage() {
           </form>
         </section>
 
+        {cores.length === 0 ? (
+          <p className="text-center text-gray-400">
+            Nenhum core criado ainda. Crie o primeiro acima.
+          </p>
+        ) : (
+        <>
+        <details open className="group mb-8 border-b border-red-900 pb-6">
+          <summary className="mb-4 flex cursor-pointer select-none list-none items-center gap-2 text-lg font-semibold text-red-300 [&::-webkit-details-marker]:hidden">
+            <span aria-hidden="true" className="transition-transform group-open:rotate-90">▸</span>
+            Cores existentes ({cores.length})
+          </summary>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            {RAID_CORE_SIZES.map((size) => {
+              const sizeCores = cores.filter((core) => core.size === size);
+
+              return (
+                <div key={size}>
+                  <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-400">
+                    {size} pessoas ({sizeCores.length})
+                  </h3>
+                  {sizeCores.length === 0 ? (
+                    <p className="text-sm text-gray-600">Nenhum core.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {sizeCores.map((core) => {
+                        const coreSignups = signups.filter((signup) => signup.coreId === core.id);
+                        const placedCount = coreSignups.filter(
+                          (signup) => signup.status === "selected"
+                        ).length;
+                        const isActive = core.id === activeCoreId;
+
+                        return (
+                          <li
+                            key={core.id}
+                            className={`flex items-center justify-between gap-3 rounded-md border px-3 py-2 ${
+                              isActive ? "border-red-500 bg-red-950/40" : "border-red-900 bg-[#111]"
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedSize(core.size);
+                                setSelectedCore(core.id);
+                              }}
+                              className="min-w-0 flex-1 text-left"
+                            >
+                              <span className="block truncate font-semibold text-white">{core.name}</span>
+                              <span className="block text-xs text-gray-400">
+                                {placedCount}/{core.size} alocados · {coreSignups.length - placedCount} aguardando
+                              </span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void deleteCore(core)}
+                              disabled={deletingCoreId !== null}
+                              className="shrink-0 text-sm text-red-300 hover:text-red-200 disabled:opacity-50"
+                            >
+                              {deletingCoreId === core.id ? "Excluindo..." : "Excluir"}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </details>
+
         <section className="mb-8 grid gap-4 border-b border-red-900 pb-6 sm:grid-cols-2">
           <label className="flex flex-col gap-2 text-sm text-gray-300">
             Core
@@ -324,10 +439,12 @@ export default function ManageRaidCoresPage() {
           </label>
         </section>
 
+        {activeCore ? (
+        <>
         <section className="mb-10">
           <div className="mb-5 flex items-baseline justify-between gap-3">
             <h2 className="text-2xl font-semibold text-red-400">
-              {activeCore?.name ?? "Nenhum core criado"} · Raid {selectedSize}
+              {activeCore.name} · Raid {selectedSize}
             </h2>
             <span className="text-sm text-gray-400">
               {placed.length}/{selectedSize} alocados
@@ -394,6 +511,14 @@ export default function ManageRaidCoresPage() {
             </div>
           )}
         </section>
+        </>
+        ) : (
+          <p className="text-center text-gray-400">
+            Nenhum core criado para {selectedSize} pessoas.
+          </p>
+        )}
+        </>
+        )}
       </div>
     </div>
     </DndContext>

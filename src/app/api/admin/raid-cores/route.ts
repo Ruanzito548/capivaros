@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { canAccessWowAdmin } from "@/lib/permissions";
-import { listRaidCores } from "@/lib/raid-cores-server";
+import { getRaidCore, listRaidCores } from "@/lib/raid-cores-server";
 import {
   isRaidCoreId,
   isRaidCoreSize,
@@ -103,6 +103,45 @@ export async function POST(request: NextRequest) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       { error: "Failed to create core", message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const decodedToken = await getAuthorizedAdmin(request);
+  if (!decodedToken) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    const body = (await request.json()) as { coreId?: unknown };
+    const coreId = typeof body.coreId === "string" ? body.coreId : "";
+    const core = coreId ? await getRaidCore(coreId) : null;
+
+    if (!core) {
+      return NextResponse.json({ error: "Core nao encontrado." }, { status: 404 });
+    }
+
+    const signups = await adminDb
+      .collection("raidCoreSignups")
+      .where("coreId", "==", coreId)
+      .get();
+
+    // Limite de 500 operacoes por batch no Firestore.
+    for (let start = 0; start < signups.docs.length; start += 400) {
+      const batch = adminDb.batch();
+      signups.docs.slice(start, start + 400).forEach((document) => batch.delete(document.ref));
+      await batch.commit();
+    }
+
+    await adminDb.collection("raidCores").doc(coreId).delete();
+
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { error: "Failed to delete core", message },
       { status: 500 }
     );
   }
