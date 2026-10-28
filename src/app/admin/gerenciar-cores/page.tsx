@@ -18,7 +18,6 @@ import WowSpecIcons from "@/components/wow-spec-icons";
 import {
   RAID_CORE_SIZES,
   type RaidCore,
-  type RaidCoreId,
   type RaidCoreSize,
   type RaidCoreSignup,
 } from "@/lib/raid-cores";
@@ -47,8 +46,7 @@ export default function ManageRaidCoresPage() {
   const [newCoreSize, setNewCoreSize] = useState<RaidCoreSize>(40);
   const [creatingCore, setCreatingCore] = useState(false);
   const [deletingCoreId, setDeletingCoreId] = useState<string | null>(null);
-  const [selectedCore, setSelectedCore] = useState<RaidCoreId>("");
-  const [selectedSize, setSelectedSize] = useState<RaidCoreSize>(40);
+  const [expandedCoreIds, setExpandedCoreIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -198,8 +196,7 @@ export default function ManageRaidCoresPage() {
       });
 
       await fetchSignups();
-      setSelectedSize(newCoreSize);
-      setSelectedCore(result.core.id);
+      setExpandedCoreIds((current) => new Set(current).add(result.core.id));
       setNewCoreName("");
       setFeedback(`${result.core.name} criado.`);
     } catch (createError) {
@@ -264,18 +261,13 @@ export default function ManageRaidCoresPage() {
     );
   }
 
-  const availableCores = cores.filter((core) => core.size === selectedSize);
-  const activeCore =
-    availableCores.find((core) => core.id === selectedCore) ?? availableCores[0];
-  const activeCoreId = activeCore?.id ?? "";
-  const selectedSignups = signups.filter(
-    (signup) => signup.coreId === activeCoreId && signup.size === selectedSize
-  );
-  const placed = selectedSignups.filter(
-    (signup) => signup.status === "selected" && signup.slot !== null
-  );
-  const pending = selectedSignups.filter((signup) => signup.status === "pending");
-  const totalGroups = selectedSize / 5;
+  const toggleCore = (coreId: string) => {
+    setExpandedCoreIds((current) => {
+      const next = new Set(current);
+      if (!next.delete(coreId)) next.add(coreId);
+      return next;
+    });
+  };
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
@@ -346,182 +338,153 @@ export default function ManageRaidCoresPage() {
           </p>
         ) : (
         <>
-        <details open className="group mb-8 border-b border-red-900 pb-6">
-          <summary className="mb-4 flex cursor-pointer select-none list-none items-center gap-2 text-lg font-semibold text-red-300 [&::-webkit-details-marker]:hidden">
-            <span aria-hidden="true" className="transition-transform group-open:rotate-90">▸</span>
-            Cores existentes ({cores.length})
-          </summary>
+        <section className="space-y-8">
+          {RAID_CORE_SIZES.map((size) => {
+            const sizeCores = cores.filter((core) => core.size === size);
+            if (sizeCores.length === 0) return null;
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            {RAID_CORE_SIZES.map((size) => {
-              const sizeCores = cores.filter((core) => core.size === size);
+            return (
+              <div key={size}>
+                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400">
+                  Cores de {size} pessoas ({sizeCores.length})
+                </h2>
+                <ul className="space-y-3">
+                  {sizeCores.map((core) => {
+                    const coreSignups = signups.filter(
+                      (signup) => signup.coreId === core.id && signup.size === core.size
+                    );
+                    const placedCount = coreSignups.filter(
+                      (signup) => signup.status === "selected" && signup.slot !== null
+                    ).length;
+                    const expanded = expandedCoreIds.has(core.id);
 
-              return (
-                <div key={size}>
-                  <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-400">
-                    {size} pessoas ({sizeCores.length})
-                  </h3>
-                  {sizeCores.length === 0 ? (
-                    <p className="text-sm text-gray-600">Nenhum core.</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {sizeCores.map((core) => {
-                        const coreSignups = signups.filter((signup) => signup.coreId === core.id);
-                        const placedCount = coreSignups.filter(
-                          (signup) => signup.status === "selected"
-                        ).length;
-                        const isActive = core.id === activeCoreId;
-
-                        return (
-                          <li
-                            key={core.id}
-                            className={`flex items-center justify-between gap-3 rounded-md border px-3 py-2 ${
-                              isActive ? "border-red-500 bg-red-950/40" : "border-red-900 bg-[#111]"
-                            }`}
-                          >
+                    return (
+                      <li key={core.id} className="rounded-md border border-red-900 bg-[#0d0d0d]">
+                        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-lg font-semibold text-red-300">{core.name}</p>
+                            <p className="text-xs text-gray-400">
+                              {placedCount}/{core.size} alocados · {coreSignups.length - placedCount} aguardando
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              onClick={() => {
-                                setSelectedSize(core.size);
-                                setSelectedCore(core.id);
-                              }}
-                              className="min-w-0 flex-1 text-left"
+                              aria-expanded={expanded}
+                              onClick={() => toggleCore(core.id)}
+                              className="rounded-md border border-red-800 px-3 py-1.5 text-sm font-semibold text-red-200 transition hover:bg-red-950"
                             >
-                              <span className="block truncate font-semibold text-white">{core.name}</span>
-                              <span className="block text-xs text-gray-400">
-                                {placedCount}/{core.size} alocados · {coreSignups.length - placedCount} aguardando
-                              </span>
+                              {expanded ? "Minimizar" : "Expandir"}
                             </button>
                             <button
                               type="button"
                               onClick={() => void deleteCore(core)}
                               disabled={deletingCoreId !== null}
-                              className="shrink-0 text-sm text-red-300 hover:text-red-200 disabled:opacity-50"
+                              className="rounded-md px-3 py-1.5 text-sm text-red-300 transition hover:bg-red-950 disabled:opacity-50"
                             >
                               {deletingCoreId === core.id ? "Excluindo..." : "Excluir"}
                             </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </details>
+                          </div>
+                        </div>
 
-        <section className="mb-8 grid gap-4 border-b border-red-900 pb-6 sm:grid-cols-2">
-          <label className="flex flex-col gap-2 text-sm text-gray-300">
-            Core
-            <select
-              value={activeCoreId}
-              onChange={(event) => setSelectedCore(event.target.value as RaidCoreId)}
-              className="rounded-md border border-red-900 bg-[#111] px-4 py-3 text-white"
-            >
-              {availableCores.map((core) => (
-                <option key={core.id} value={core.id}>{core.name}</option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-2 text-sm text-gray-300">
-            Tamanho da raid
-            <select
-              value={selectedSize}
-              onChange={(event) => setSelectedSize(Number(event.target.value) as RaidCoreSize)}
-              className="rounded-md border border-red-900 bg-[#111] px-4 py-3 text-white"
-            >
-              {RAID_CORE_SIZES.map((size) => (
-                <option key={size} value={size}>{size} pessoas</option>
-              ))}
-            </select>
-          </label>
-        </section>
-
-        {activeCore ? (
-        <>
-        <section className="mb-10">
-          <div className="mb-5 flex items-baseline justify-between gap-3">
-            <h2 className="text-2xl font-semibold text-red-400">
-              {activeCore.name} · Raid {selectedSize}
-            </h2>
-            <span className="text-sm text-gray-400">
-              {placed.length}/{selectedSize} alocados
-            </span>
-          </div>
-
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            {Array.from({ length: totalGroups }, (_, groupIndex) => (
-              <section key={groupIndex}>
-                <h3 className="mb-2 text-center text-sm font-semibold text-gray-400">
-                  Grupo {groupIndex + 1}
-                </h3>
-                <ol className="space-y-2">
-                  {Array.from({ length: 5 }, (_, memberIndex) => {
-                    const slot = groupIndex * 5 + memberIndex + 1;
-                    const signup = placed.find((entry) => entry.slot === slot);
-                    return (
-                      <DroppableRaidSlot
-                        key={slot}
-                        coreId={activeCoreId}
-                        size={selectedSize}
-                        slot={slot}
-                        signup={signup}
-                        disabled={savingId !== null}
-                        onUnplace={() => {
-                          if (signup) void updateSignup(signup, "unplace");
-                        }}
-                      />
+                        {expanded && (
+                          <div className="border-t border-red-950 px-4 py-5">
+                            <CoreComposition
+                              core={core}
+                              signups={coreSignups}
+                              disabled={savingId !== null}
+                              onUnplace={(signup) => void updateSignup(signup, "unplace")}
+                            />
+                          </div>
+                        )}
+                      </li>
                     );
                   })}
-                </ol>
-              </section>
-            ))}
-          </div>
+                </ul>
+              </div>
+            );
+          })}
         </section>
-
-        <section className="border-t border-red-900 pt-8">
-          <div className="mb-5 flex items-baseline justify-between gap-3">
-            <h2 className="text-2xl font-semibold text-red-400">
-              Inscritos aguardando
-            </h2>
-            <span className="text-sm text-gray-400">{pending.length}</span>
-          </div>
-
-          {pending.length === 0 ? (
-            <p className="text-sm text-gray-500">Nenhum inscrito aguardando para esse tamanho.</p>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {pending.map((signup) => {
-                return (
-                  <DraggableSignup key={signup.id} signup={signup}>
-                    <div className="border border-white/10 bg-[#141414] p-4 pr-10">
-                      <p
-                        className="font-semibold text-white"
-                        style={{ color: getWowClassColor(signup.characterClass) }}
-                      >
-                        {signup.characterName}
-                      </p>
-                      <SpecializationIcons signup={signup} />
-                    </div>
-                  </DraggableSignup>
-                );
-              })}
-            </div>
-          )}
-        </section>
-        </>
-        ) : (
-          <p className="text-center text-gray-400">
-            Nenhum core criado para {selectedSize} pessoas.
-          </p>
-        )}
         </>
         )}
       </div>
     </div>
     </DndContext>
+  );
+}
+
+function CoreComposition({
+  core,
+  signups,
+  disabled,
+  onUnplace,
+}: {
+  core: RaidCore;
+  signups: RaidCoreSignup[];
+  disabled: boolean;
+  onUnplace: (signup: RaidCoreSignup) => void;
+}) {
+  const placed = signups.filter(
+    (signup) => signup.status === "selected" && signup.slot !== null
+  );
+  const pending = signups.filter((signup) => signup.status === "pending");
+
+  return (
+    <div className="space-y-8">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: core.size / 5 }, (_, groupIndex) => (
+          <section key={groupIndex}>
+            <h3 className="mb-2 text-center text-sm font-semibold text-gray-400">
+              Grupo {groupIndex + 1}
+            </h3>
+            <ol className="space-y-2">
+              {Array.from({ length: 5 }, (_, memberIndex) => {
+                const slot = groupIndex * 5 + memberIndex + 1;
+                const signup = placed.find((entry) => entry.slot === slot);
+                return (
+                  <DroppableRaidSlot
+                    key={slot}
+                    coreId={core.id}
+                    size={core.size}
+                    slot={slot}
+                    signup={signup}
+                    disabled={disabled}
+                    onUnplace={() => {
+                      if (signup) onUnplace(signup);
+                    }}
+                  />
+                );
+              })}
+            </ol>
+          </section>
+        ))}
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-lg font-semibold text-red-300">
+          Inscritos aguardando ({pending.length})
+        </h3>
+        {pending.length === 0 ? (
+          <p className="text-sm text-gray-500">Nenhum inscrito aguardando.</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {pending.map((signup) => (
+              <DraggableSignup key={signup.id} signup={signup}>
+                <div className="border border-white/10 bg-[#141414] p-4 pr-10">
+                  <p
+                    className="font-semibold text-white"
+                    style={{ color: getWowClassColor(signup.characterClass) }}
+                  >
+                    {signup.characterName}
+                  </p>
+                  <SpecializationIcons signup={signup} />
+                </div>
+              </DraggableSignup>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
