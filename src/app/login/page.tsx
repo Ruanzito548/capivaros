@@ -1,64 +1,34 @@
 "use client";
 
-import { useState } from "react";
-import { auth, db } from "@/lib/firebase";
-import {
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "firebase/auth";
-import {
-  doc,
-  getDoc,
-  setDoc,
-} from "firebase/firestore";
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { getSafeNextPath } from "@/lib/safe-next-path";
+
+const ERROR_MESSAGES: Record<string, string> = {
+  cancelled: "Login cancelado no Discord.",
+  state: "A sessao de login expirou. Tente novamente.",
+  config: "O login com Discord ainda nao esta configurado. Avise um administrador.",
+  token: "O Discord recusou o login. Tente novamente.",
+  profile: "Nao foi possivel ler seu perfil do Discord. Tente novamente.",
+  server: "Nao foi possivel entrar agora. Tente novamente.",
+};
 
 export default function Login() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
+  );
+}
 
-  async function handleLogin() {
-    try {
-      setLoading(true);
-
-      const nextPath =
-        typeof window !== "undefined"
-          ? new URLSearchParams(window.location.search).get("next")
-          : null;
-
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        await setDoc(userRef, {
-          name: user.displayName,
-          email: user.email,
-          role: "member",
-          createdAt: new Date(),
-        });
-
-        router.push("/complete-profile");
-        return;
-      }
-
-      const data = userSnap.data();
-
-      if (!data.username || !data.phone) {
-        router.push("/complete-profile");
-      } else {
-        router.push(nextPath || "/dashboard");
-      }
-    } catch (error) {
-      console.error("Erro no login:", error);
-      alert("Nao foi possivel entrar agora. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
-  }
+function LoginContent() {
+  const searchParams = useSearchParams();
+  const next = getSafeNextPath(searchParams.get("next"));
+  const errorKey = searchParams.get("error");
+  const errorMessage = errorKey ? ERROR_MESSAGES[errorKey] ?? ERROR_MESSAGES.server : null;
+  const loginHref = next
+    ? `/api/auth/discord?next=${encodeURIComponent(next)}`
+    : "/api/auth/discord";
 
   return (
     <div className="min-h-screen bg-transparent text-white px-6 py-16">
@@ -74,7 +44,7 @@ export default function Login() {
             </h1>
 
             <p className="mt-6 max-w-xl text-base leading-7 text-gray-300">
-              Use sua conta Google para entrar com seguranca, completar seu
+              Use sua conta do Discord para entrar com seguranca, completar seu
               perfil e acompanhar tudo da guilda em um unico lugar.
             </p>
 
@@ -84,7 +54,7 @@ export default function Login() {
                   1. Login rapido
                 </p>
                 <p className="mt-2 text-sm text-gray-400">
-                  Entre com Google em poucos segundos.
+                  Entre com Discord em poucos segundos.
                 </p>
               </div>
 
@@ -120,13 +90,18 @@ export default function Login() {
                   completar o perfil antes de entrar no dashboard.
                 </p>
 
-                <button
-                  onClick={handleLogin}
-                  disabled={loading}
-                  className="mt-8 flex w-full items-center justify-center rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                {errorMessage && (
+                  <p role="alert" className="mt-6 rounded-xl border border-red-800 bg-red-950/40 px-4 py-3 text-sm text-red-200">
+                    {errorMessage}
+                  </p>
+                )}
+
+                <a
+                  href={loginHref}
+                  className="mt-8 flex w-full items-center justify-center rounded-xl bg-[#5865F2] px-6 py-3 font-semibold text-white transition hover:bg-[#4752c4]"
                 >
-                  {loading ? "Entrando..." : "Entrar com Google"}
-                </button>
+                  Entrar com Discord
+                </a>
 
                 <div className="mt-8 rounded-2xl border border-red-900/50 bg-[#111]/70 p-5">
                   <p className="text-sm font-semibold text-red-400">
